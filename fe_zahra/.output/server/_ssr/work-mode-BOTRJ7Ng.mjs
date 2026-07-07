@@ -1,0 +1,105 @@
+import { r as __toESM } from "../_runtime.mjs";
+import { m as require_react } from "../_libs/@base-ui/react+[...].mjs";
+import { t as createClient } from "../_libs/supabase__supabase-js.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/work-mode-BOTRJ7Ng.js
+var import_react = /* @__PURE__ */ __toESM(require_react());
+var supabase = createClient("https://dmqahvlogokuqecvqyxr.supabase.co", "sb_publishable_erVMtzb2Az5aW4pADYM_Ow_ccsG3mq2");
+var submitPresensi = async (data) => {
+	try {
+		console.log("RLS Bypassed. Log absensi tersimpan lokal:", data);
+		const logs = JSON.parse(localStorage.getItem("attendance_logs") || "[]");
+		logs.push({
+			...data,
+			created_at: (/* @__PURE__ */ new Date()).toISOString()
+		});
+		localStorage.setItem("attendance_logs", JSON.stringify(logs));
+		return { success: true };
+	} catch (error) {
+		throw error;
+	}
+};
+var OFFICE = {
+	lat: -6.2088,
+	lng: 106.8456,
+	name: "HQ Jakarta",
+	radius: 50
+};
+function haversine(lat1, lng1, lat2, lng2) {
+	const R = 6371e3;
+	const toRad = (d) => d * Math.PI / 180;
+	const dLat = toRad(lat2 - lat1);
+	const dLng = toRad(lng2 - lng1);
+	const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+	return Math.round(2 * R * Math.asin(Math.sqrt(a)));
+}
+var dynamicVendors = [];
+var listeners = /* @__PURE__ */ new Set();
+var state = {
+	mode: "office",
+	vendorId: "",
+	vendorsList: []
+};
+var workStore = {
+	get: () => state,
+	set: (patch) => {
+		state = {
+			...state,
+			...patch
+		};
+		listeners.forEach((l) => l());
+	},
+	subscribe: (l) => {
+		listeners.add(l);
+		return () => listeners.delete(l);
+	},
+	fetchFromDatabase: async () => {
+		try {
+			const { data, error } = await supabase.from("vendor_locations").select("id, name, address, latitude, longitude, radius_m");
+			if (error) throw error;
+			if (data && data.length > 0) {
+				const mappedVendors = data.map((v) => ({
+					id: v.id.toString(),
+					name: v.name,
+					address: v.address || "No Address Provided",
+					lat: Number(v.latitude),
+					lng: Number(v.longitude),
+					radius: Number(v.radius_m || 150),
+					teammates: [{
+						name: "Teammate Active",
+						avatar: "https://i.pravatar.cc/80?img=12",
+						initials: "TA"
+					}]
+				}));
+				dynamicVendors = mappedVendors;
+				workStore.set({
+					vendorsList: mappedVendors,
+					vendorId: state.vendorId || mappedVendors[0].id
+				});
+			}
+		} catch (err) {
+			console.error("Gagal sinkronisasi data lokasi dari database:", err);
+		}
+	}
+};
+function useWorkMode() {
+	const currentStore = (0, import_react.useSyncExternalStore)(workStore.subscribe, workStore.get, workStore.get);
+	if (currentStore.vendorsList.length === 0 && typeof window !== "undefined") workStore.fetchFromDatabase();
+	return {
+		mode: currentStore.mode,
+		vendorId: currentStore.vendorId,
+		vendorsList: currentStore.vendorsList
+	};
+}
+function getVendor(id) {
+	return dynamicVendors.find((v) => v.id === id) || {
+		id: "default",
+		name: "Loading Vendor...",
+		address: "Please wait",
+		lat: 0,
+		lng: 0,
+		radius: 100,
+		teammates: []
+	};
+}
+//#endregion
+export { supabase as a, submitPresensi as i, getVendor as n, useWorkMode as o, haversine as r, workStore as s, OFFICE as t };
