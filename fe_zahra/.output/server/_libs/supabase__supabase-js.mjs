@@ -1,7 +1,7 @@
-import { t as RealtimeClient } from "./supabase__realtime-js+unenv.mjs";
 import { t as AuthClient } from "./supabase__auth-js+tslib.mjs";
 import { t as FunctionsClient } from "./supabase__functions-js.mjs";
 import { t as PostgrestClient } from "./supabase__postgrest-js.mjs";
+import { t as RealtimeClient } from "./supabase__realtime-js+unenv.mjs";
 import { t as StorageClient } from "./@supabase/storage-js+[...].mjs";
 import processModule from "node:process";
 //#region node_modules/@supabase/supabase-js/dist/index.mjs

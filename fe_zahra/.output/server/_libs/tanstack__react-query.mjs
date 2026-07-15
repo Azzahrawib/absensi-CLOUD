@@ -124,4 +124,4 @@ function useQuery(options, queryClient) {
 	return useBaseQuery(options, QueryObserver, queryClient);
 }
 //#endregion
-export { QueryClientProvider as n, useQuery as t };
+export { QueryClientProvider as n, useQueryClient as r, useQuery as t };

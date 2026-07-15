@@ -1,5 +1,5 @@
 import { p as require_jsx_runtime } from "../_libs/@base-ui/react+[...].mjs";
-import { b as House, g as LogOut, r as User, w as Camera } from "../_libs/lucide-react.mjs";
+import { D as House, P as Camera, S as LogOut, a as User } from "../_libs/lucide-react.mjs";
 import { f as Outlet, g as Link, l as useRouterState } from "../_libs/@tanstack/react-router+[...].mjs";
 //#region node_modules/.nitro/vite/services/ssr/assets/employee-Czb8XSlk.js
 var import_jsx_runtime = require_jsx_runtime();

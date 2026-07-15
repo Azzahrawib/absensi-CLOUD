@@ -1972,6 +1972,7 @@ function useRegisterFieldControl(controlRef, id, value, getFormValueOverride, en
 var none = "none";
 var triggerPress = "trigger-press";
 var outsidePress = "outside-press";
+var closePress = "close-press";
 var focusOut = "focus-out";
 var escapeKey = "escape-key";
 var imperativeAction = "imperative-action";
@@ -2280,417 +2281,141 @@ var Button = /*#__PURE__*/ import_react.forwardRef(function Button(componentProp
 	});
 });
 //#endregion
-//#region node_modules/use-sync-external-store/cjs/use-sync-external-store-shim.production.js
-/**
-* @license React
-* use-sync-external-store-shim.production.js
-*
-* Copyright (c) Meta Platforms, Inc. and affiliates.
-*
-* This source code is licensed under the MIT license found in the
-* LICENSE file in the root directory of this source tree.
-*/
-var require_use_sync_external_store_shim_production = /* @__PURE__ */ __commonJSMin(((exports) => {
-	var React = require_react();
-	function is(x, y) {
-		return x === y && (0 !== x || 1 / x === 1 / y) || x !== x && y !== y;
-	}
-	var objectIs = "function" === typeof Object.is ? Object.is : is, useState = React.useState, useEffect = React.useEffect, useLayoutEffect = React.useLayoutEffect, useDebugValue = React.useDebugValue;
-	function useSyncExternalStore$2(subscribe, getSnapshot) {
-		var value = getSnapshot(), _useState = useState({ inst: {
-			value,
-			getSnapshot
-		} }), inst = _useState[0].inst, forceUpdate = _useState[1];
-		useLayoutEffect(function() {
-			inst.value = value;
-			inst.getSnapshot = getSnapshot;
-			checkIfSnapshotChanged(inst) && forceUpdate({ inst });
-		}, [
-			subscribe,
-			value,
-			getSnapshot
-		]);
-		useEffect(function() {
-			checkIfSnapshotChanged(inst) && forceUpdate({ inst });
-			return subscribe(function() {
-				checkIfSnapshotChanged(inst) && forceUpdate({ inst });
-			});
-		}, [subscribe]);
-		useDebugValue(value);
-		return value;
-	}
-	function checkIfSnapshotChanged(inst) {
-		var latestGetSnapshot = inst.getSnapshot;
-		inst = inst.value;
-		try {
-			var nextValue = latestGetSnapshot();
-			return !objectIs(inst, nextValue);
-		} catch (error) {
-			return !0;
-		}
-	}
-	function useSyncExternalStore$1(subscribe, getSnapshot) {
-		return getSnapshot();
-	}
-	var shim = "undefined" === typeof window || "undefined" === typeof window.document || "undefined" === typeof window.document.createElement ? useSyncExternalStore$1 : useSyncExternalStore$2;
-	exports.useSyncExternalStore = void 0 !== React.useSyncExternalStore ? React.useSyncExternalStore : shim;
-}));
-//#endregion
-//#region node_modules/use-sync-external-store/shim/index.js
-var require_shim = /* @__PURE__ */ __commonJSMin(((exports, module) => {
-	module.exports = require_use_sync_external_store_shim_production();
-}));
-//#endregion
-//#region node_modules/use-sync-external-store/cjs/use-sync-external-store-shim/with-selector.production.js
-/**
-* @license React
-* use-sync-external-store-shim/with-selector.production.js
-*
-* Copyright (c) Meta Platforms, Inc. and affiliates.
-*
-* This source code is licensed under the MIT license found in the
-* LICENSE file in the root directory of this source tree.
-*/
-var require_with_selector_production = /* @__PURE__ */ __commonJSMin(((exports) => {
-	var React = require_react(), shim = require_shim();
-	function is(x, y) {
-		return x === y && (0 !== x || 1 / x === 1 / y) || x !== x && y !== y;
-	}
-	var objectIs = "function" === typeof Object.is ? Object.is : is, useSyncExternalStore = shim.useSyncExternalStore, useRef = React.useRef, useEffect = React.useEffect, useMemo = React.useMemo, useDebugValue = React.useDebugValue;
-	exports.useSyncExternalStoreWithSelector = function(subscribe, getSnapshot, getServerSnapshot, selector, isEqual) {
-		var instRef = useRef(null);
-		if (null === instRef.current) {
-			var inst = {
-				hasValue: !1,
-				value: null
-			};
-			instRef.current = inst;
-		} else inst = instRef.current;
-		instRef = useMemo(function() {
-			function memoizedSelector(nextSnapshot) {
-				if (!hasMemo) {
-					hasMemo = !0;
-					memoizedSnapshot = nextSnapshot;
-					nextSnapshot = selector(nextSnapshot);
-					if (void 0 !== isEqual && inst.hasValue) {
-						var currentSelection = inst.value;
-						if (isEqual(currentSelection, nextSnapshot)) return memoizedSelection = currentSelection;
-					}
-					return memoizedSelection = nextSnapshot;
-				}
-				currentSelection = memoizedSelection;
-				if (objectIs(memoizedSnapshot, nextSnapshot)) return currentSelection;
-				var nextSelection = selector(nextSnapshot);
-				if (void 0 !== isEqual && isEqual(currentSelection, nextSelection)) return memoizedSnapshot = nextSnapshot, currentSelection;
-				memoizedSnapshot = nextSnapshot;
-				return memoizedSelection = nextSelection;
-			}
-			var hasMemo = !1, memoizedSnapshot, memoizedSelection, maybeGetServerSnapshot = void 0 === getServerSnapshot ? null : getServerSnapshot;
-			return [function() {
-				return memoizedSelector(getSnapshot());
-			}, null === maybeGetServerSnapshot ? void 0 : function() {
-				return memoizedSelector(maybeGetServerSnapshot());
-			}];
-		}, [
-			getSnapshot,
-			getServerSnapshot,
-			selector,
-			isEqual
-		]);
-		var value = useSyncExternalStore(subscribe, instRef[0], instRef[1]);
-		useEffect(function() {
-			inst.hasValue = !0;
-			inst.value = value;
-		}, [value]);
-		useDebugValue(value);
-		return value;
-	};
-}));
-//#endregion
-//#region node_modules/use-sync-external-store/shim/with-selector.js
-var require_with_selector = /* @__PURE__ */ __commonJSMin(((exports, module) => {
-	module.exports = require_with_selector_production();
-}));
-//#endregion
-//#region node_modules/@base-ui/utils/visuallyHidden.mjs
-var visuallyHiddenBase = {
-	clipPath: "inset(50%)",
-	overflow: "hidden",
-	whiteSpace: "nowrap",
-	border: 0,
-	padding: 0,
-	width: 1,
-	height: 1,
-	margin: -1
-};
-var visuallyHidden = {
-	...visuallyHiddenBase,
-	position: "fixed",
-	top: 0,
-	left: 0
-};
-var visuallyHiddenInput = {
-	...visuallyHiddenBase,
-	position: "absolute"
-};
-//#endregion
-//#region node_modules/@base-ui/react/switch/root/SwitchRootContext.mjs
-var SwitchRootContext = /*#__PURE__*/ import_react.createContext(void 0);
-function useSwitchRootContext() {
-	const context = import_react.useContext(SwitchRootContext);
-	if (context === void 0) throw new Error(formatErrorMessage(63));
-	return context;
+//#region node_modules/@base-ui/react/dialog/root/DialogRootContext.mjs
+var IsDrawerContext = /*#__PURE__*/ import_react.createContext(false);
+var DialogRootContext = /*#__PURE__*/ import_react.createContext(void 0);
+function useDialogRootContext(optional) {
+	const dialogRootContext = import_react.useContext(DialogRootContext);
+	if (optional === false && dialogRootContext === void 0) throw new Error(formatErrorMessage(27));
+	return dialogRootContext;
 }
 //#endregion
-//#region node_modules/@base-ui/react/switch/root/SwitchRootDataAttributes.mjs
-var SwitchRootDataAttributes = /*#__PURE__*/ function(SwitchRootDataAttributes) {
+//#region node_modules/@base-ui/react/utils/popupStateMapping.mjs
+var CommonPopupDataAttributes = function(CommonPopupDataAttributes) {
 	/**
-	* Present when the switch is checked.
+	* Present when the popup is open.
 	*/
-	SwitchRootDataAttributes["checked"] = "data-checked";
+	CommonPopupDataAttributes["open"] = "data-open";
 	/**
-	* Present when the switch is not checked.
+	* Present when the popup is closed.
 	*/
-	SwitchRootDataAttributes["unchecked"] = "data-unchecked";
+	CommonPopupDataAttributes["closed"] = "data-closed";
 	/**
-	* Present when the switch is disabled.
+	* Present when the popup is animating in.
 	*/
-	SwitchRootDataAttributes["disabled"] = "data-disabled";
+	CommonPopupDataAttributes[CommonPopupDataAttributes["startingStyle"] = TransitionStatusDataAttributes.startingStyle] = "startingStyle";
 	/**
-	* Present when the switch is readonly.
+	* Present when the popup is animating out.
 	*/
-	SwitchRootDataAttributes["readonly"] = "data-readonly";
+	CommonPopupDataAttributes[CommonPopupDataAttributes["endingStyle"] = TransitionStatusDataAttributes.endingStyle] = "endingStyle";
 	/**
-	* Present when the switch is required.
+	* Present when the anchor is hidden.
 	*/
-	SwitchRootDataAttributes["required"] = "data-required";
+	CommonPopupDataAttributes["anchorHidden"] = "data-anchor-hidden";
 	/**
-	* Present when the switch is in a valid state (when wrapped in Field.Root).
+	* Indicates which side the popup is positioned relative to the trigger.
+	* @type { 'top' | 'bottom' | 'left' | 'right' | 'inline-end' | 'inline-start'}
 	*/
-	SwitchRootDataAttributes["valid"] = "data-valid";
+	CommonPopupDataAttributes["side"] = "data-side";
 	/**
-	* Present when the switch is in an invalid state (when wrapped in Field.Root).
+	* Indicates how the popup is aligned relative to specified side.
+	* @type {'start' | 'center' | 'end'}
 	*/
-	SwitchRootDataAttributes["invalid"] = "data-invalid";
-	/**
-	* Present when the switch has been touched (when wrapped in Field.Root).
-	*/
-	SwitchRootDataAttributes["touched"] = "data-touched";
-	/**
-	* Present when the switch's value has changed (when wrapped in Field.Root).
-	*/
-	SwitchRootDataAttributes["dirty"] = "data-dirty";
-	/**
-	* Present when the switch is active (when wrapped in Field.Root).
-	*/
-	SwitchRootDataAttributes["filled"] = "data-filled";
-	/**
-	* Present when the switch is focused (when wrapped in Field.Root).
-	*/
-	SwitchRootDataAttributes["focused"] = "data-focused";
-	return SwitchRootDataAttributes;
+	CommonPopupDataAttributes["align"] = "data-align";
+	return CommonPopupDataAttributes;
 }({});
-//#endregion
-//#region node_modules/@base-ui/react/switch/stateAttributesMapping.mjs
-var stateAttributesMapping$2 = {
-	...fieldValidityMapping,
-	checked(value) {
-		if (value) return { [SwitchRootDataAttributes.checked]: "" };
-		return { [SwitchRootDataAttributes.unchecked]: "" };
+var CommonTriggerDataAttributes = /*#__PURE__*/ function(CommonTriggerDataAttributes) {
+	/**
+	* Present when the popup is open.
+	*/
+	CommonTriggerDataAttributes["popupOpen"] = "data-popup-open";
+	/**
+	* Present when a pressable trigger is pressed.
+	*/
+	CommonTriggerDataAttributes["pressed"] = "data-pressed";
+	return CommonTriggerDataAttributes;
+}({});
+CommonTriggerDataAttributes.popupOpen;
+CommonTriggerDataAttributes.popupOpen, CommonTriggerDataAttributes.pressed;
+var POPUP_OPEN_HOOK = { [CommonPopupDataAttributes.open]: "" };
+var POPUP_CLOSED_HOOK = { [CommonPopupDataAttributes.closed]: "" };
+var ANCHOR_HIDDEN_HOOK = { [CommonPopupDataAttributes.anchorHidden]: "" };
+var popupStateMapping = {
+	open(value) {
+		if (value) return POPUP_OPEN_HOOK;
+		return POPUP_CLOSED_HOOK;
+	},
+	anchorHidden(value) {
+		if (value) return ANCHOR_HIDDEN_HOOK;
+		return null;
 	}
 };
 //#endregion
-//#region node_modules/@base-ui/react/internals/useValueChanged.mjs
-function useValueChanged(value, onChange) {
-	const valueRef = import_react.useRef(value);
-	const onChangeCallback = useStableCallback(onChange);
-	useIsoLayoutEffect(() => {
-		if (valueRef.current === value) return;
-		onChangeCallback(valueRef.current);
-	}, [value, onChangeCallback]);
-	useIsoLayoutEffect(() => {
-		valueRef.current = value;
-	}, [value]);
-}
-//#endregion
-//#region node_modules/@base-ui/react/switch/root/SwitchRoot.mjs
+//#region node_modules/@base-ui/react/dialog/backdrop/DialogBackdrop.mjs
+var stateAttributesMapping$2 = {
+	...popupStateMapping,
+	...transitionStatusMapping
+};
 /**
-* Represents the switch itself.
-* Renders a `<span>` element and a hidden `<input>` beside.
+* An overlay displayed beneath the popup.
+* Renders a `<div>` element.
 *
-* Documentation: [Base UI Switch](https://base-ui.com/react/components/switch)
+* Documentation: [Base UI Dialog](https://base-ui.com/react/components/dialog)
 */
-var SwitchRoot = /*#__PURE__*/ import_react.forwardRef(function SwitchRoot(componentProps, forwardedRef) {
-	const { checked: checkedProp, className, defaultChecked, "aria-labelledby": ariaLabelledByProp, form, id: idProp, inputRef: externalInputRef, name: nameProp, nativeButton = false, onCheckedChange, readOnly = false, required = false, disabled: disabledProp = false, render, uncheckedValue, value, style, ...elementProps } = componentProps;
-	const { clearErrors } = useFormContext();
-	const { state: fieldState, setTouched, setDirty, validityData, setFilled, setFocused, validationMode, disabled: fieldDisabled, name: fieldName, validation } = useFieldRootContext();
-	const { labelId } = useLabelableContext();
-	const disabled = fieldDisabled || disabledProp;
-	const name = fieldName ?? nameProp;
-	const inputRef = import_react.useRef(null);
-	const handleInputRef = useMergedRefs(inputRef, externalInputRef, validation.inputRef);
-	const switchRef = import_react.useRef(null);
-	const id = useBaseUiId();
-	const controlId = useLabelableId({
-		id: idProp,
-		implicit: false,
-		controlRef: switchRef
+var DialogBackdrop = /*#__PURE__*/ import_react.forwardRef(function DialogBackdrop(componentProps, forwardedRef) {
+	const { render, className, style, forceRender = false, ...elementProps } = componentProps;
+	const { store } = useDialogRootContext();
+	const open = store.useState("open");
+	const nested = store.useState("nested");
+	const mounted = store.useState("mounted");
+	return useRenderElement("div", componentProps, {
+		state: {
+			open,
+			transitionStatus: store.useState("transitionStatus")
+		},
+		ref: [store.context.backdropRef, forwardedRef],
+		stateAttributesMapping: stateAttributesMapping$2,
+		props: [{
+			role: "presentation",
+			hidden: !mounted,
+			style: {
+				userSelect: "none",
+				WebkitUserSelect: "none"
+			}
+		}, elementProps],
+		enabled: forceRender || !nested
 	});
-	const hiddenInputId = nativeButton ? void 0 : controlId;
-	const [checked, setCheckedState] = useControlled({
-		controlled: checkedProp,
-		default: Boolean(defaultChecked),
-		name: "Switch",
-		state: "checked"
-	});
-	useRegisterFieldControl(switchRef, id, checked, void 0, !disabled, nameProp);
-	useIsoLayoutEffect(() => {
-		if (inputRef.current) setFilled(inputRef.current.checked);
-	}, [inputRef, setFilled]);
-	useValueChanged(checked, () => {
-		clearErrors(name);
-		setDirty(checked !== validityData.initialValue);
-		setFilled(checked);
-		validation.change(checked);
-	});
+});
+//#endregion
+//#region node_modules/@base-ui/react/dialog/close/DialogClose.mjs
+/**
+* A button that closes the dialog.
+* Renders a `<button>` element.
+*
+* Documentation: [Base UI Dialog](https://base-ui.com/react/components/dialog)
+*/
+var DialogClose = /*#__PURE__*/ import_react.forwardRef(function DialogClose(componentProps, forwardedRef) {
+	const { render, className, style, disabled = false, nativeButton = true, ...elementProps } = componentProps;
+	const { store } = useDialogRootContext();
+	const open = store.useState("open");
 	const { getButtonProps, buttonRef } = useButton({
 		disabled,
 		native: nativeButton
 	});
-	const ariaLabelledBy = useAriaLabelledBy(ariaLabelledByProp, labelId, inputRef, !nativeButton, hiddenInputId);
-	const rootProps = {
-		id: nativeButton ? controlId : id,
-		role: "switch",
-		"aria-checked": checked,
-		"aria-readonly": readOnly || void 0,
-		"aria-required": required || void 0,
-		"aria-labelledby": ariaLabelledBy,
-		onFocus() {
-			if (!disabled) setFocused(true);
-		},
-		onBlur() {
-			const element = inputRef.current;
-			if (!element || disabled) return;
-			setTouched(true);
-			setFocused(false);
-			if (validationMode === "onBlur") validation.commit(element.checked);
-		},
-		onClick(event) {
-			if (readOnly || disabled) return;
-			event.preventDefault();
-			const input = inputRef.current;
-			if (!input) return;
-			input.dispatchEvent(new (getWindow(input)).PointerEvent("click", {
-				bubbles: true,
-				shiftKey: event.shiftKey,
-				ctrlKey: event.ctrlKey,
-				altKey: event.altKey,
-				metaKey: event.metaKey
-			}));
-		}
-	};
-	const inputProps = mergeProps({
-		checked,
-		disabled,
-		form,
-		id: hiddenInputId,
-		name,
-		required,
-		style: name ? visuallyHiddenInput : visuallyHidden,
-		tabIndex: -1,
-		type: "checkbox",
-		"aria-hidden": true,
-		ref: handleInputRef,
-		onChange(event) {
-			if (event.nativeEvent.defaultPrevented) return;
-			if (readOnly) {
-				event.preventDefault();
-				return;
-			}
-			const nextChecked = event.currentTarget.checked;
-			const eventDetails = createChangeEventDetails(none, event.nativeEvent);
-			onCheckedChange?.(nextChecked, eventDetails);
-			if (eventDetails.isCanceled) return;
-			setCheckedState(nextChecked);
-		},
-		onFocus() {
-			switchRef.current?.focus();
-		}
-	}, (props) => validation.getValidationProps(disabled, props), value !== void 0 ? { value } : EMPTY_OBJECT);
-	const state = import_react.useMemo(() => ({
-		...fieldState,
-		checked,
-		disabled,
-		readOnly,
-		required
-	}), [
-		fieldState,
-		checked,
-		disabled,
-		readOnly,
-		required
-	]);
-	const element = useRenderElement("span", componentProps, {
+	const state = { disabled };
+	function handleClick(event) {
+		if (open) store.setOpen(false, createChangeEventDetails(closePress, event.nativeEvent));
+	}
+	return useRenderElement("button", componentProps, {
 		state,
-		ref: [
-			forwardedRef,
-			switchRef,
-			buttonRef
-		],
+		ref: [forwardedRef, buttonRef],
 		props: [
-			rootProps,
+			{ onClick: handleClick },
 			elementProps,
-			getButtonProps,
-			(props) => validation.getValidationProps(disabled, props)
-		],
-		stateAttributesMapping: stateAttributesMapping$2
-	});
-	return /*#__PURE__*/ (0, import_jsx_runtime.jsxs)(SwitchRootContext.Provider, {
-		value: state,
-		children: [
-			element,
-			!checked && name && uncheckedValue !== void 0 && /*#__PURE__*/ (0, import_jsx_runtime.jsx)("input", {
-				type: "hidden",
-				form,
-				name,
-				value: uncheckedValue,
-				disabled
-			}),
-			/*#__PURE__*/ (0, import_jsx_runtime.jsx)("input", {
-				...inputProps,
-				suppressHydrationWarning: true
-			})
+			getButtonProps
 		]
 	});
 });
-//#endregion
-//#region node_modules/@base-ui/react/switch/thumb/SwitchThumb.mjs
-/**
-* The movable part of the switch that indicates whether the switch is on or off.
-* Renders a `<span>`.
-*
-* Documentation: [Base UI Switch](https://base-ui.com/react/components/switch)
-*/
-var SwitchThumb = /*#__PURE__*/ import_react.forwardRef(function SwitchThumb(componentProps, forwardedRef) {
-	const { render, className, style, ...elementProps } = componentProps;
-	return useRenderElement("span", componentProps, {
-		state: useSwitchRootContext(),
-		ref: forwardedRef,
-		stateAttributesMapping: stateAttributesMapping$2,
-		props: elementProps
-	});
-});
-//#endregion
-//#region node_modules/@base-ui/utils/useOnFirstRender.mjs
-var import_shim = require_shim();
-var import_with_selector = require_with_selector();
-function useOnFirstRender(fn) {
-	const ref = import_react.useRef(true);
-	if (ref.current) {
-		ref.current = false;
-		fn();
-	}
-}
 //#endregion
 //#region node_modules/@base-ui/utils/addEventListener.mjs
 /**
@@ -2701,184 +2426,6 @@ function addEventListener(target, type, listener, options) {
 	return () => {
 		target.removeEventListener(type, listener, options);
 	};
-}
-//#endregion
-//#region node_modules/@base-ui/utils/useScrollLock.mjs
-var originalHtmlStyles = {};
-var originalBodyStyles = {};
-var originalHtmlScrollBehavior = "";
-function hasInsetScrollbars(referenceElement) {
-	if (typeof document === "undefined") return false;
-	const doc = ownerDocument(referenceElement);
-	return getWindow(doc).innerWidth - doc.documentElement.clientWidth > 0;
-}
-function supportsStableScrollbarGutter(referenceElement) {
-	if (!(typeof CSS !== "undefined" && CSS.supports && CSS.supports("scrollbar-gutter", "stable")) || typeof document === "undefined") return false;
-	const doc = ownerDocument(referenceElement);
-	const html = doc.documentElement;
-	const body = doc.body;
-	const scrollContainer = isOverflowElement(html) ? html : body;
-	const originalScrollContainerOverflowY = scrollContainer.style.overflowY;
-	const originalHtmlStyleGutter = html.style.scrollbarGutter;
-	html.style.scrollbarGutter = "stable";
-	scrollContainer.style.overflowY = "scroll";
-	const before = scrollContainer.offsetWidth;
-	scrollContainer.style.overflowY = "hidden";
-	const after = scrollContainer.offsetWidth;
-	scrollContainer.style.overflowY = originalScrollContainerOverflowY;
-	html.style.scrollbarGutter = originalHtmlStyleGutter;
-	return before === after;
-}
-function preventScrollOverlayScrollbars(referenceElement) {
-	const doc = ownerDocument(referenceElement);
-	const html = doc.documentElement;
-	const body = doc.body;
-	const elementToLock = isOverflowElement(html) ? html : body;
-	const originalElementToLockStyles = {
-		overflowY: elementToLock.style.overflowY,
-		overflowX: elementToLock.style.overflowX
-	};
-	Object.assign(elementToLock.style, {
-		overflowY: "hidden",
-		overflowX: "hidden"
-	});
-	return () => {
-		Object.assign(elementToLock.style, originalElementToLockStyles);
-	};
-}
-function preventScrollInsetScrollbars(referenceElement) {
-	const doc = ownerDocument(referenceElement);
-	const html = doc.documentElement;
-	const body = doc.body;
-	const win = getWindow(html);
-	let scrollTop = 0;
-	let scrollLeft = 0;
-	let updateGutterOnly = false;
-	const resizeFrame = AnimationFrame.create();
-	if (webkit && (win.visualViewport?.scale ?? 1) !== 1) return () => {};
-	function lockScroll() {
-		const htmlStyles = win.getComputedStyle(html);
-		const bodyStyles = win.getComputedStyle(body);
-		const scrollbarGutterValue = (htmlStyles.scrollbarGutter || "").includes("both-edges") ? "stable both-edges" : "stable";
-		scrollTop = html.scrollTop;
-		scrollLeft = html.scrollLeft;
-		originalHtmlStyles = {
-			scrollbarGutter: html.style.scrollbarGutter,
-			overflowY: html.style.overflowY,
-			overflowX: html.style.overflowX
-		};
-		originalHtmlScrollBehavior = html.style.scrollBehavior;
-		originalBodyStyles = {
-			position: body.style.position,
-			height: body.style.height,
-			width: body.style.width,
-			boxSizing: body.style.boxSizing,
-			overflowY: body.style.overflowY,
-			overflowX: body.style.overflowX,
-			scrollBehavior: body.style.scrollBehavior
-		};
-		const isScrollableY = html.scrollHeight > html.clientHeight;
-		const isScrollableX = html.scrollWidth > html.clientWidth;
-		const hasConstantOverflowY = htmlStyles.overflowY === "scroll" || bodyStyles.overflowY === "scroll";
-		const hasConstantOverflowX = htmlStyles.overflowX === "scroll" || bodyStyles.overflowX === "scroll";
-		const scrollbarWidth = Math.max(0, win.innerWidth - body.clientWidth);
-		const scrollbarHeight = Math.max(0, win.innerHeight - body.clientHeight);
-		const marginY = parseFloat(bodyStyles.marginTop) + parseFloat(bodyStyles.marginBottom);
-		const marginX = parseFloat(bodyStyles.marginLeft) + parseFloat(bodyStyles.marginRight);
-		const elementToLock = isOverflowElement(html) ? html : body;
-		updateGutterOnly = supportsStableScrollbarGutter(referenceElement);
-		if (updateGutterOnly) {
-			html.style.scrollbarGutter = scrollbarGutterValue;
-			elementToLock.style.overflowY = "hidden";
-			elementToLock.style.overflowX = "hidden";
-			return;
-		}
-		Object.assign(html.style, {
-			scrollbarGutter: scrollbarGutterValue,
-			overflowY: "hidden",
-			overflowX: "hidden"
-		});
-		if (isScrollableY || hasConstantOverflowY) html.style.overflowY = "scroll";
-		if (isScrollableX || hasConstantOverflowX) html.style.overflowX = "scroll";
-		Object.assign(body.style, {
-			position: "relative",
-			height: marginY || scrollbarHeight ? `calc(100dvh - ${marginY + scrollbarHeight}px)` : "100dvh",
-			width: marginX || scrollbarWidth ? `calc(100vw - ${marginX + scrollbarWidth}px)` : "100vw",
-			boxSizing: "border-box",
-			overflow: "hidden",
-			scrollBehavior: "unset"
-		});
-		body.scrollTop = scrollTop;
-		body.scrollLeft = scrollLeft;
-		html.setAttribute("data-base-ui-scroll-locked", "");
-		html.style.scrollBehavior = "unset";
-	}
-	function cleanup() {
-		Object.assign(html.style, originalHtmlStyles);
-		Object.assign(body.style, originalBodyStyles);
-		if (!updateGutterOnly) {
-			html.scrollTop = scrollTop;
-			html.scrollLeft = scrollLeft;
-			html.removeAttribute("data-base-ui-scroll-locked");
-			html.style.scrollBehavior = originalHtmlScrollBehavior;
-		}
-	}
-	function handleResize() {
-		cleanup();
-		resizeFrame.request(lockScroll);
-	}
-	lockScroll();
-	const unsubscribeResize = addEventListener(win, "resize", handleResize);
-	return () => {
-		resizeFrame.cancel();
-		cleanup();
-		if (typeof win.removeEventListener === "function") unsubscribeResize();
-	};
-}
-var ScrollLocker = class {
-	lockCount = 0;
-	restore = null;
-	timeoutLock = Timeout.create();
-	timeoutUnlock = Timeout.create();
-	acquire(referenceElement) {
-		this.lockCount += 1;
-		if (this.lockCount === 1 && this.restore === null) this.timeoutLock.start(0, () => this.lock(referenceElement));
-		return this.release;
-	}
-	release = () => {
-		this.lockCount -= 1;
-		if (this.lockCount === 0 && this.restore) this.timeoutUnlock.start(0, this.unlock);
-	};
-	unlock = () => {
-		if (this.lockCount === 0 && this.restore) {
-			this.restore?.();
-			this.restore = null;
-		}
-	};
-	lock(referenceElement) {
-		if (this.lockCount === 0 || this.restore !== null) return;
-		const html = ownerDocument(referenceElement).documentElement;
-		const htmlOverflowY = getWindow(html).getComputedStyle(html).overflowY;
-		if (htmlOverflowY === "hidden" || htmlOverflowY === "clip") {
-			this.restore = NOOP;
-			return;
-		}
-		const hasOverlayScrollbars = ios || !hasInsetScrollbars(referenceElement);
-		this.restore = hasOverlayScrollbars ? preventScrollOverlayScrollbars(referenceElement) : preventScrollInsetScrollbars(referenceElement);
-	}
-};
-var SCROLL_LOCKER = new ScrollLocker();
-/**
-* Locks the scroll of the document when enabled.
-*
-* @param enabled - Whether to enable the scroll lock.
-* @param referenceElement - Element to use as a reference for lock calculations.
-*/
-function useScrollLock(enabled = true, referenceElement = null) {
-	useIsoLayoutEffect(() => {
-		if (!enabled) return;
-		return SCROLL_LOCKER.acquire(referenceElement);
-	}, [enabled, referenceElement]);
 }
 //#endregion
 //#region node_modules/@base-ui/utils/mergeCleanups.mjs
@@ -2916,6 +2463,28 @@ function createLatestRef(value) {
 	};
 	return latest;
 }
+//#endregion
+//#region node_modules/@base-ui/utils/visuallyHidden.mjs
+var visuallyHiddenBase = {
+	clipPath: "inset(50%)",
+	overflow: "hidden",
+	whiteSpace: "nowrap",
+	border: 0,
+	padding: 0,
+	width: 1,
+	height: 1,
+	margin: -1
+};
+var visuallyHidden = {
+	...visuallyHiddenBase,
+	position: "fixed",
+	top: 0,
+	left: 0
+};
+var visuallyHiddenInput = {
+	...visuallyHiddenBase,
+	position: "absolute"
+};
 //#endregion
 //#region node_modules/@base-ui/react/utils/FocusGuard.mjs
 /**
@@ -4027,6 +3596,15 @@ function useDismiss(context, props = {}) {
 	]);
 }
 //#endregion
+//#region node_modules/@base-ui/utils/useOnFirstRender.mjs
+function useOnFirstRender(fn) {
+	const ref = import_react.useRef(true);
+	if (ref.current) {
+		ref.current = false;
+		fn();
+	}
+}
+//#endregion
 //#region node_modules/@base-ui/utils/store/createSelector.mjs
 /**
 * The NoOptionalParams type is a utility type that checks if a function has optional or default parameters.
@@ -4081,7 +3659,141 @@ var createSelector = (a, b, c, d, e, f, ...other) => {
 	return selector;
 };
 //#endregion
+//#region node_modules/use-sync-external-store/cjs/use-sync-external-store-shim.production.js
+/**
+* @license React
+* use-sync-external-store-shim.production.js
+*
+* Copyright (c) Meta Platforms, Inc. and affiliates.
+*
+* This source code is licensed under the MIT license found in the
+* LICENSE file in the root directory of this source tree.
+*/
+var require_use_sync_external_store_shim_production = /* @__PURE__ */ __commonJSMin(((exports) => {
+	var React = require_react();
+	function is(x, y) {
+		return x === y && (0 !== x || 1 / x === 1 / y) || x !== x && y !== y;
+	}
+	var objectIs = "function" === typeof Object.is ? Object.is : is, useState = React.useState, useEffect = React.useEffect, useLayoutEffect = React.useLayoutEffect, useDebugValue = React.useDebugValue;
+	function useSyncExternalStore$2(subscribe, getSnapshot) {
+		var value = getSnapshot(), _useState = useState({ inst: {
+			value,
+			getSnapshot
+		} }), inst = _useState[0].inst, forceUpdate = _useState[1];
+		useLayoutEffect(function() {
+			inst.value = value;
+			inst.getSnapshot = getSnapshot;
+			checkIfSnapshotChanged(inst) && forceUpdate({ inst });
+		}, [
+			subscribe,
+			value,
+			getSnapshot
+		]);
+		useEffect(function() {
+			checkIfSnapshotChanged(inst) && forceUpdate({ inst });
+			return subscribe(function() {
+				checkIfSnapshotChanged(inst) && forceUpdate({ inst });
+			});
+		}, [subscribe]);
+		useDebugValue(value);
+		return value;
+	}
+	function checkIfSnapshotChanged(inst) {
+		var latestGetSnapshot = inst.getSnapshot;
+		inst = inst.value;
+		try {
+			var nextValue = latestGetSnapshot();
+			return !objectIs(inst, nextValue);
+		} catch (error) {
+			return !0;
+		}
+	}
+	function useSyncExternalStore$1(subscribe, getSnapshot) {
+		return getSnapshot();
+	}
+	var shim = "undefined" === typeof window || "undefined" === typeof window.document || "undefined" === typeof window.document.createElement ? useSyncExternalStore$1 : useSyncExternalStore$2;
+	exports.useSyncExternalStore = void 0 !== React.useSyncExternalStore ? React.useSyncExternalStore : shim;
+}));
+//#endregion
+//#region node_modules/use-sync-external-store/shim/index.js
+var require_shim = /* @__PURE__ */ __commonJSMin(((exports, module) => {
+	module.exports = require_use_sync_external_store_shim_production();
+}));
+//#endregion
+//#region node_modules/use-sync-external-store/cjs/use-sync-external-store-shim/with-selector.production.js
+/**
+* @license React
+* use-sync-external-store-shim/with-selector.production.js
+*
+* Copyright (c) Meta Platforms, Inc. and affiliates.
+*
+* This source code is licensed under the MIT license found in the
+* LICENSE file in the root directory of this source tree.
+*/
+var require_with_selector_production = /* @__PURE__ */ __commonJSMin(((exports) => {
+	var React = require_react(), shim = require_shim();
+	function is(x, y) {
+		return x === y && (0 !== x || 1 / x === 1 / y) || x !== x && y !== y;
+	}
+	var objectIs = "function" === typeof Object.is ? Object.is : is, useSyncExternalStore = shim.useSyncExternalStore, useRef = React.useRef, useEffect = React.useEffect, useMemo = React.useMemo, useDebugValue = React.useDebugValue;
+	exports.useSyncExternalStoreWithSelector = function(subscribe, getSnapshot, getServerSnapshot, selector, isEqual) {
+		var instRef = useRef(null);
+		if (null === instRef.current) {
+			var inst = {
+				hasValue: !1,
+				value: null
+			};
+			instRef.current = inst;
+		} else inst = instRef.current;
+		instRef = useMemo(function() {
+			function memoizedSelector(nextSnapshot) {
+				if (!hasMemo) {
+					hasMemo = !0;
+					memoizedSnapshot = nextSnapshot;
+					nextSnapshot = selector(nextSnapshot);
+					if (void 0 !== isEqual && inst.hasValue) {
+						var currentSelection = inst.value;
+						if (isEqual(currentSelection, nextSnapshot)) return memoizedSelection = currentSelection;
+					}
+					return memoizedSelection = nextSnapshot;
+				}
+				currentSelection = memoizedSelection;
+				if (objectIs(memoizedSnapshot, nextSnapshot)) return currentSelection;
+				var nextSelection = selector(nextSnapshot);
+				if (void 0 !== isEqual && isEqual(currentSelection, nextSelection)) return memoizedSnapshot = nextSnapshot, currentSelection;
+				memoizedSnapshot = nextSnapshot;
+				return memoizedSelection = nextSelection;
+			}
+			var hasMemo = !1, memoizedSnapshot, memoizedSelection, maybeGetServerSnapshot = void 0 === getServerSnapshot ? null : getServerSnapshot;
+			return [function() {
+				return memoizedSelector(getSnapshot());
+			}, null === maybeGetServerSnapshot ? void 0 : function() {
+				return memoizedSelector(maybeGetServerSnapshot());
+			}];
+		}, [
+			getSnapshot,
+			getServerSnapshot,
+			selector,
+			isEqual
+		]);
+		var value = useSyncExternalStore(subscribe, instRef[0], instRef[1]);
+		useEffect(function() {
+			inst.hasValue = !0;
+			inst.value = value;
+		}, [value]);
+		useDebugValue(value);
+		return value;
+	};
+}));
+//#endregion
+//#region node_modules/use-sync-external-store/shim/with-selector.js
+var require_with_selector = /* @__PURE__ */ __commonJSMin(((exports, module) => {
+	module.exports = require_with_selector_production();
+}));
+//#endregion
 //#region node_modules/@base-ui/utils/fastHooks.mjs
+var import_shim = require_shim();
+var import_with_selector = require_with_selector();
 var hooks = [];
 var currentInstance = void 0;
 function getInstance() {
@@ -4871,6 +4583,392 @@ var popupStoreSelectors = {
 	positionerElement: createSelector((state) => state.positionerElement)
 };
 //#endregion
+//#region node_modules/@base-ui/react/dialog/popup/DialogPopupCssVars.mjs
+var DialogPopupCssVars = /*#__PURE__*/ function(DialogPopupCssVars) {
+	/**
+	* Indicates how many dialogs are nested within.
+	* @type {number}
+	*/
+	DialogPopupCssVars["nestedDialogs"] = "--nested-dialogs";
+	return DialogPopupCssVars;
+}({});
+//#endregion
+//#region node_modules/@base-ui/react/dialog/popup/DialogPopupDataAttributes.mjs
+var DialogPopupDataAttributes = function(DialogPopupDataAttributes) {
+	/**
+	* Present when the dialog is open.
+	*/
+	DialogPopupDataAttributes[DialogPopupDataAttributes["open"] = CommonPopupDataAttributes.open] = "open";
+	/**
+	* Present when the dialog is closed.
+	*/
+	DialogPopupDataAttributes[DialogPopupDataAttributes["closed"] = CommonPopupDataAttributes.closed] = "closed";
+	/**
+	* Present when the dialog is animating in.
+	*/
+	DialogPopupDataAttributes[DialogPopupDataAttributes["startingStyle"] = CommonPopupDataAttributes.startingStyle] = "startingStyle";
+	/**
+	* Present when the dialog is animating out.
+	*/
+	DialogPopupDataAttributes[DialogPopupDataAttributes["endingStyle"] = CommonPopupDataAttributes.endingStyle] = "endingStyle";
+	/**
+	* Present when the dialog is nested within another dialog.
+	*/
+	DialogPopupDataAttributes["nested"] = "data-nested";
+	/**
+	* Present when the dialog has other open dialogs nested within it.
+	*/
+	DialogPopupDataAttributes["nestedDialogOpen"] = "data-nested-dialog-open";
+	return DialogPopupDataAttributes;
+}({});
+//#endregion
+//#region node_modules/@base-ui/react/dialog/portal/DialogPortalContext.mjs
+var DialogPortalContext = /*#__PURE__*/ import_react.createContext(void 0);
+function useDialogPortalContext() {
+	const value = import_react.useContext(DialogPortalContext);
+	if (value === void 0) throw new Error(formatErrorMessage(26));
+	return value;
+}
+//#endregion
+//#region node_modules/@base-ui/react/internals/composite/composite.mjs
+var ARROW_UP = "ArrowUp";
+var ARROW_DOWN = "ArrowDown";
+var ARROW_LEFT = "ArrowLeft";
+var ARROW_RIGHT = "ArrowRight";
+var HOME = "Home";
+var HORIZONTAL_KEYS = /* @__PURE__ */ new Set([ARROW_LEFT, ARROW_RIGHT]);
+var VERTICAL_KEYS = /* @__PURE__ */ new Set([ARROW_UP, ARROW_DOWN]);
+var ARROW_KEYS = /* @__PURE__ */ new Set([...HORIZONTAL_KEYS, ...VERTICAL_KEYS]);
+var COMPOSITE_KEYS = /* @__PURE__ */ new Set([
+	...ARROW_KEYS,
+	HOME,
+	"End"
+]);
+//#endregion
+//#region node_modules/@base-ui/react/dialog/popup/DialogPopup.mjs
+var stateAttributesMapping$1 = {
+	...popupStateMapping,
+	...transitionStatusMapping,
+	nestedDialogOpen(value) {
+		return value ? { [DialogPopupDataAttributes.nestedDialogOpen]: "" } : null;
+	}
+};
+/**
+* A container for the dialog contents.
+* Renders a `<div>` element.
+*
+* Documentation: [Base UI Dialog](https://base-ui.com/react/components/dialog)
+*/
+var DialogPopup = /*#__PURE__*/ import_react.forwardRef(function DialogPopup(componentProps, forwardedRef) {
+	const { render, className, style, finalFocus, initialFocus, ...elementProps } = componentProps;
+	const { store } = useDialogRootContext();
+	const descriptionElementId = store.useState("descriptionElementId");
+	const disablePointerDismissal = store.useState("disablePointerDismissal");
+	const floatingRootContext = store.useState("floatingRootContext");
+	const rootPopupProps = store.useState("popupProps");
+	const modal = store.useState("modal");
+	const mounted = store.useState("mounted");
+	const nested = store.useState("nested");
+	const nestedOpenDialogCount = store.useState("nestedOpenDialogCount");
+	const open = store.useState("open");
+	const openMethod = store.useState("openMethod");
+	const titleElementId = store.useState("titleElementId");
+	const transitionStatus = store.useState("transitionStatus");
+	const role = store.useState("role");
+	const floatingId = floatingRootContext.useState("floatingId");
+	const popupId = elementProps.id ?? floatingId;
+	useDialogPortalContext();
+	useOpenChangeComplete({
+		open,
+		ref: store.context.popupRef,
+		onComplete() {
+			if (open) store.context.onOpenChangeComplete?.(true);
+		}
+	});
+	const resolvedInitialFocus = initialFocus === void 0 ? createDefaultInitialFocus(store.context.popupRef) : initialFocus;
+	const nestedDialogOpen = nestedOpenDialogCount > 0;
+	const setPopupElement = store.useStateSetter("popupElement");
+	const element = useRenderElement("div", componentProps, {
+		state: {
+			open,
+			nested,
+			transitionStatus,
+			nestedDialogOpen
+		},
+		props: [
+			rootPopupProps,
+			{
+				id: popupId,
+				"aria-labelledby": titleElementId ?? void 0,
+				"aria-describedby": descriptionElementId ?? void 0,
+				role,
+				...FOCUSABLE_POPUP_PROPS,
+				hidden: !mounted,
+				onKeyDown(event) {
+					if (COMPOSITE_KEYS.has(event.key)) event.stopPropagation();
+				},
+				style: { [DialogPopupCssVars.nestedDialogs]: nestedOpenDialogCount }
+			},
+			elementProps
+		],
+		ref: [
+			forwardedRef,
+			store.context.popupRef,
+			setPopupElement
+		],
+		stateAttributesMapping: stateAttributesMapping$1
+	});
+	return /*#__PURE__*/ (0, import_jsx_runtime.jsx)(FloatingFocusManager, {
+		context: floatingRootContext,
+		openInteractionType: openMethod,
+		disabled: !mounted,
+		closeOnFocusOut: !disablePointerDismissal,
+		initialFocus: resolvedInitialFocus,
+		returnFocus: finalFocus,
+		modal: modal !== false,
+		restoreFocus: "popup",
+		children: element
+	});
+});
+//#endregion
+//#region node_modules/@base-ui/utils/inertValue.mjs
+function inertValue(value) {
+	if (isReactVersionAtLeast(19)) return value;
+	return value ? "true" : void 0;
+}
+//#endregion
+//#region node_modules/@base-ui/react/utils/InternalBackdrop.mjs
+/**
+* @internal
+*/
+var InternalBackdrop = /*#__PURE__*/ import_react.forwardRef(function InternalBackdrop(props, ref) {
+	const { cutout, ...otherProps } = props;
+	let clipPath;
+	if (cutout) {
+		const rect = cutout.getBoundingClientRect();
+		clipPath = `polygon(0% 0%,100% 0%,100% 100%,0% 100%,0% 0%,${rect.left}px ${rect.top}px,${rect.left}px ${rect.bottom}px,${rect.right}px ${rect.bottom}px,${rect.right}px ${rect.top}px,${rect.left}px ${rect.top}px)`;
+	}
+	return /*#__PURE__*/ (0, import_jsx_runtime.jsx)("div", {
+		ref,
+		role: "presentation",
+		"data-base-ui-inert": "",
+		...otherProps,
+		style: {
+			position: "fixed",
+			inset: 0,
+			userSelect: "none",
+			WebkitUserSelect: "none",
+			clipPath
+		}
+	});
+});
+//#endregion
+//#region node_modules/@base-ui/react/dialog/portal/DialogPortal.mjs
+/**
+* A portal element that moves the popup to a different part of the DOM.
+* By default, the portal element is appended to `<body>`.
+* Renders a `<div>` element.
+*
+* Documentation: [Base UI Dialog](https://base-ui.com/react/components/dialog)
+*/
+var DialogPortal = /*#__PURE__*/ import_react.forwardRef(function DialogPortal(props, forwardedRef) {
+	const { keepMounted = false, ...portalProps } = props;
+	const { store } = useDialogRootContext();
+	const mounted = store.useState("mounted");
+	const modal = store.useState("modal");
+	const open = store.useState("open");
+	if (!(mounted || keepMounted)) return null;
+	return /*#__PURE__*/ (0, import_jsx_runtime.jsx)(DialogPortalContext.Provider, {
+		value: keepMounted,
+		children: /*#__PURE__*/ (0, import_jsx_runtime.jsxs)(FloatingPortal, {
+			ref: forwardedRef,
+			...portalProps,
+			children: [mounted && modal === true && /*#__PURE__*/ (0, import_jsx_runtime.jsx)(InternalBackdrop, {
+				ref: store.context.internalBackdropRef,
+				inert: inertValue(!open)
+			}), props.children]
+		})
+	});
+});
+//#endregion
+//#region node_modules/@base-ui/utils/useScrollLock.mjs
+var originalHtmlStyles = {};
+var originalBodyStyles = {};
+var originalHtmlScrollBehavior = "";
+function hasInsetScrollbars(referenceElement) {
+	if (typeof document === "undefined") return false;
+	const doc = ownerDocument(referenceElement);
+	return getWindow(doc).innerWidth - doc.documentElement.clientWidth > 0;
+}
+function supportsStableScrollbarGutter(referenceElement) {
+	if (!(typeof CSS !== "undefined" && CSS.supports && CSS.supports("scrollbar-gutter", "stable")) || typeof document === "undefined") return false;
+	const doc = ownerDocument(referenceElement);
+	const html = doc.documentElement;
+	const body = doc.body;
+	const scrollContainer = isOverflowElement(html) ? html : body;
+	const originalScrollContainerOverflowY = scrollContainer.style.overflowY;
+	const originalHtmlStyleGutter = html.style.scrollbarGutter;
+	html.style.scrollbarGutter = "stable";
+	scrollContainer.style.overflowY = "scroll";
+	const before = scrollContainer.offsetWidth;
+	scrollContainer.style.overflowY = "hidden";
+	const after = scrollContainer.offsetWidth;
+	scrollContainer.style.overflowY = originalScrollContainerOverflowY;
+	html.style.scrollbarGutter = originalHtmlStyleGutter;
+	return before === after;
+}
+function preventScrollOverlayScrollbars(referenceElement) {
+	const doc = ownerDocument(referenceElement);
+	const html = doc.documentElement;
+	const body = doc.body;
+	const elementToLock = isOverflowElement(html) ? html : body;
+	const originalElementToLockStyles = {
+		overflowY: elementToLock.style.overflowY,
+		overflowX: elementToLock.style.overflowX
+	};
+	Object.assign(elementToLock.style, {
+		overflowY: "hidden",
+		overflowX: "hidden"
+	});
+	return () => {
+		Object.assign(elementToLock.style, originalElementToLockStyles);
+	};
+}
+function preventScrollInsetScrollbars(referenceElement) {
+	const doc = ownerDocument(referenceElement);
+	const html = doc.documentElement;
+	const body = doc.body;
+	const win = getWindow(html);
+	let scrollTop = 0;
+	let scrollLeft = 0;
+	let updateGutterOnly = false;
+	const resizeFrame = AnimationFrame.create();
+	if (webkit && (win.visualViewport?.scale ?? 1) !== 1) return () => {};
+	function lockScroll() {
+		const htmlStyles = win.getComputedStyle(html);
+		const bodyStyles = win.getComputedStyle(body);
+		const scrollbarGutterValue = (htmlStyles.scrollbarGutter || "").includes("both-edges") ? "stable both-edges" : "stable";
+		scrollTop = html.scrollTop;
+		scrollLeft = html.scrollLeft;
+		originalHtmlStyles = {
+			scrollbarGutter: html.style.scrollbarGutter,
+			overflowY: html.style.overflowY,
+			overflowX: html.style.overflowX
+		};
+		originalHtmlScrollBehavior = html.style.scrollBehavior;
+		originalBodyStyles = {
+			position: body.style.position,
+			height: body.style.height,
+			width: body.style.width,
+			boxSizing: body.style.boxSizing,
+			overflowY: body.style.overflowY,
+			overflowX: body.style.overflowX,
+			scrollBehavior: body.style.scrollBehavior
+		};
+		const isScrollableY = html.scrollHeight > html.clientHeight;
+		const isScrollableX = html.scrollWidth > html.clientWidth;
+		const hasConstantOverflowY = htmlStyles.overflowY === "scroll" || bodyStyles.overflowY === "scroll";
+		const hasConstantOverflowX = htmlStyles.overflowX === "scroll" || bodyStyles.overflowX === "scroll";
+		const scrollbarWidth = Math.max(0, win.innerWidth - body.clientWidth);
+		const scrollbarHeight = Math.max(0, win.innerHeight - body.clientHeight);
+		const marginY = parseFloat(bodyStyles.marginTop) + parseFloat(bodyStyles.marginBottom);
+		const marginX = parseFloat(bodyStyles.marginLeft) + parseFloat(bodyStyles.marginRight);
+		const elementToLock = isOverflowElement(html) ? html : body;
+		updateGutterOnly = supportsStableScrollbarGutter(referenceElement);
+		if (updateGutterOnly) {
+			html.style.scrollbarGutter = scrollbarGutterValue;
+			elementToLock.style.overflowY = "hidden";
+			elementToLock.style.overflowX = "hidden";
+			return;
+		}
+		Object.assign(html.style, {
+			scrollbarGutter: scrollbarGutterValue,
+			overflowY: "hidden",
+			overflowX: "hidden"
+		});
+		if (isScrollableY || hasConstantOverflowY) html.style.overflowY = "scroll";
+		if (isScrollableX || hasConstantOverflowX) html.style.overflowX = "scroll";
+		Object.assign(body.style, {
+			position: "relative",
+			height: marginY || scrollbarHeight ? `calc(100dvh - ${marginY + scrollbarHeight}px)` : "100dvh",
+			width: marginX || scrollbarWidth ? `calc(100vw - ${marginX + scrollbarWidth}px)` : "100vw",
+			boxSizing: "border-box",
+			overflow: "hidden",
+			scrollBehavior: "unset"
+		});
+		body.scrollTop = scrollTop;
+		body.scrollLeft = scrollLeft;
+		html.setAttribute("data-base-ui-scroll-locked", "");
+		html.style.scrollBehavior = "unset";
+	}
+	function cleanup() {
+		Object.assign(html.style, originalHtmlStyles);
+		Object.assign(body.style, originalBodyStyles);
+		if (!updateGutterOnly) {
+			html.scrollTop = scrollTop;
+			html.scrollLeft = scrollLeft;
+			html.removeAttribute("data-base-ui-scroll-locked");
+			html.style.scrollBehavior = originalHtmlScrollBehavior;
+		}
+	}
+	function handleResize() {
+		cleanup();
+		resizeFrame.request(lockScroll);
+	}
+	lockScroll();
+	const unsubscribeResize = addEventListener(win, "resize", handleResize);
+	return () => {
+		resizeFrame.cancel();
+		cleanup();
+		if (typeof win.removeEventListener === "function") unsubscribeResize();
+	};
+}
+var ScrollLocker = class {
+	lockCount = 0;
+	restore = null;
+	timeoutLock = Timeout.create();
+	timeoutUnlock = Timeout.create();
+	acquire(referenceElement) {
+		this.lockCount += 1;
+		if (this.lockCount === 1 && this.restore === null) this.timeoutLock.start(0, () => this.lock(referenceElement));
+		return this.release;
+	}
+	release = () => {
+		this.lockCount -= 1;
+		if (this.lockCount === 0 && this.restore) this.timeoutUnlock.start(0, this.unlock);
+	};
+	unlock = () => {
+		if (this.lockCount === 0 && this.restore) {
+			this.restore?.();
+			this.restore = null;
+		}
+	};
+	lock(referenceElement) {
+		if (this.lockCount === 0 || this.restore !== null) return;
+		const html = ownerDocument(referenceElement).documentElement;
+		const htmlOverflowY = getWindow(html).getComputedStyle(html).overflowY;
+		if (htmlOverflowY === "hidden" || htmlOverflowY === "clip") {
+			this.restore = NOOP;
+			return;
+		}
+		const hasOverlayScrollbars = ios || !hasInsetScrollbars(referenceElement);
+		this.restore = hasOverlayScrollbars ? preventScrollOverlayScrollbars(referenceElement) : preventScrollInsetScrollbars(referenceElement);
+	}
+};
+var SCROLL_LOCKER = new ScrollLocker();
+/**
+* Locks the scroll of the document when enabled.
+*
+* @param enabled - Whether to enable the scroll lock.
+* @param referenceElement - Element to use as a reference for lock calculations.
+*/
+function useScrollLock(enabled = true, referenceElement = null) {
+	useIsoLayoutEffect(() => {
+		if (!enabled) return;
+		return SCROLL_LOCKER.acquire(referenceElement);
+	}, [enabled, referenceElement]);
+}
+//#endregion
 //#region node_modules/@base-ui/react/dialog/root/useDialogRoot.mjs
 function useDialogRoot(params) {
 	const { store, actionsRef } = params;
@@ -4946,15 +5044,6 @@ function DialogInteractions({ store, parentContext, isDrawer }) {
 		nestedOpenDrawerCount: ownNestedOpenDrawers
 	});
 	return null;
-}
-//#endregion
-//#region node_modules/@base-ui/react/dialog/root/DialogRootContext.mjs
-var IsDrawerContext = /*#__PURE__*/ import_react.createContext(false);
-var DialogRootContext = /*#__PURE__*/ import_react.createContext(void 0);
-function useDialogRootContext(optional) {
-	const dialogRootContext = import_react.useContext(DialogRootContext);
-	if (optional === false && dialogRootContext === void 0) throw new Error(formatErrorMessage(27));
-	return dialogRootContext;
 }
 //#endregion
 //#region node_modules/@base-ui/react/dialog/store/DialogStore.mjs
@@ -5080,339 +5169,16 @@ function useRenderDialogRoot(props, mode = "dialog") {
 	});
 }
 //#endregion
-//#region node_modules/@base-ui/react/alert-dialog/root/AlertDialogRoot.mjs
+//#region node_modules/@base-ui/react/dialog/root/DialogRoot.mjs
 /**
-* Groups all parts of the alert dialog.
+* Groups all parts of the dialog.
 * Doesn't render its own HTML element.
 *
-* Documentation: [Base UI Alert Dialog](https://base-ui.com/react/components/alert-dialog)
+* Documentation: [Base UI Dialog](https://base-ui.com/react/components/dialog)
 */
-function AlertDialogRoot(props) {
-	return useRenderDialogRoot(props, "alert-dialog");
+function DialogRoot(props) {
+	return useRenderDialogRoot(props, import_react.useContext(IsDrawerContext) ? "drawer" : "dialog");
 }
-//#endregion
-//#region node_modules/@base-ui/react/utils/popupStateMapping.mjs
-var CommonPopupDataAttributes = function(CommonPopupDataAttributes) {
-	/**
-	* Present when the popup is open.
-	*/
-	CommonPopupDataAttributes["open"] = "data-open";
-	/**
-	* Present when the popup is closed.
-	*/
-	CommonPopupDataAttributes["closed"] = "data-closed";
-	/**
-	* Present when the popup is animating in.
-	*/
-	CommonPopupDataAttributes[CommonPopupDataAttributes["startingStyle"] = TransitionStatusDataAttributes.startingStyle] = "startingStyle";
-	/**
-	* Present when the popup is animating out.
-	*/
-	CommonPopupDataAttributes[CommonPopupDataAttributes["endingStyle"] = TransitionStatusDataAttributes.endingStyle] = "endingStyle";
-	/**
-	* Present when the anchor is hidden.
-	*/
-	CommonPopupDataAttributes["anchorHidden"] = "data-anchor-hidden";
-	/**
-	* Indicates which side the popup is positioned relative to the trigger.
-	* @type { 'top' | 'bottom' | 'left' | 'right' | 'inline-end' | 'inline-start'}
-	*/
-	CommonPopupDataAttributes["side"] = "data-side";
-	/**
-	* Indicates how the popup is aligned relative to specified side.
-	* @type {'start' | 'center' | 'end'}
-	*/
-	CommonPopupDataAttributes["align"] = "data-align";
-	return CommonPopupDataAttributes;
-}({});
-var CommonTriggerDataAttributes = /*#__PURE__*/ function(CommonTriggerDataAttributes) {
-	/**
-	* Present when the popup is open.
-	*/
-	CommonTriggerDataAttributes["popupOpen"] = "data-popup-open";
-	/**
-	* Present when a pressable trigger is pressed.
-	*/
-	CommonTriggerDataAttributes["pressed"] = "data-pressed";
-	return CommonTriggerDataAttributes;
-}({});
-CommonTriggerDataAttributes.popupOpen;
-CommonTriggerDataAttributes.popupOpen, CommonTriggerDataAttributes.pressed;
-var POPUP_OPEN_HOOK = { [CommonPopupDataAttributes.open]: "" };
-var POPUP_CLOSED_HOOK = { [CommonPopupDataAttributes.closed]: "" };
-var ANCHOR_HIDDEN_HOOK = { [CommonPopupDataAttributes.anchorHidden]: "" };
-var popupStateMapping = {
-	open(value) {
-		if (value) return POPUP_OPEN_HOOK;
-		return POPUP_CLOSED_HOOK;
-	},
-	anchorHidden(value) {
-		if (value) return ANCHOR_HIDDEN_HOOK;
-		return null;
-	}
-};
-//#endregion
-//#region node_modules/@base-ui/react/dialog/backdrop/DialogBackdrop.mjs
-var stateAttributesMapping$1 = {
-	...popupStateMapping,
-	...transitionStatusMapping
-};
-/**
-* An overlay displayed beneath the popup.
-* Renders a `<div>` element.
-*
-* Documentation: [Base UI Dialog](https://base-ui.com/react/components/dialog)
-*/
-var DialogBackdrop = /*#__PURE__*/ import_react.forwardRef(function DialogBackdrop(componentProps, forwardedRef) {
-	const { render, className, style, forceRender = false, ...elementProps } = componentProps;
-	const { store } = useDialogRootContext();
-	const open = store.useState("open");
-	const nested = store.useState("nested");
-	const mounted = store.useState("mounted");
-	return useRenderElement("div", componentProps, {
-		state: {
-			open,
-			transitionStatus: store.useState("transitionStatus")
-		},
-		ref: [store.context.backdropRef, forwardedRef],
-		stateAttributesMapping: stateAttributesMapping$1,
-		props: [{
-			role: "presentation",
-			hidden: !mounted,
-			style: {
-				userSelect: "none",
-				WebkitUserSelect: "none"
-			}
-		}, elementProps],
-		enabled: forceRender || !nested
-	});
-});
-//#endregion
-//#region node_modules/@base-ui/react/dialog/description/DialogDescription.mjs
-/**
-* A paragraph with additional information about the dialog.
-* Renders a `<p>` element.
-*
-* Documentation: [Base UI Dialog](https://base-ui.com/react/components/dialog)
-*/
-var DialogDescription = /*#__PURE__*/ import_react.forwardRef(function DialogDescription(componentProps, forwardedRef) {
-	const { render, className, style, id: idProp, ...elementProps } = componentProps;
-	const { store } = useDialogRootContext();
-	const id = useBaseUiId(idProp);
-	store.useSyncedValueWithCleanup("descriptionElementId", id);
-	return useRenderElement("p", componentProps, {
-		ref: forwardedRef,
-		props: [{ id }, elementProps]
-	});
-});
-//#endregion
-//#region node_modules/@base-ui/react/dialog/popup/DialogPopupCssVars.mjs
-var DialogPopupCssVars = /*#__PURE__*/ function(DialogPopupCssVars) {
-	/**
-	* Indicates how many dialogs are nested within.
-	* @type {number}
-	*/
-	DialogPopupCssVars["nestedDialogs"] = "--nested-dialogs";
-	return DialogPopupCssVars;
-}({});
-//#endregion
-//#region node_modules/@base-ui/react/dialog/popup/DialogPopupDataAttributes.mjs
-var DialogPopupDataAttributes = function(DialogPopupDataAttributes) {
-	/**
-	* Present when the dialog is open.
-	*/
-	DialogPopupDataAttributes[DialogPopupDataAttributes["open"] = CommonPopupDataAttributes.open] = "open";
-	/**
-	* Present when the dialog is closed.
-	*/
-	DialogPopupDataAttributes[DialogPopupDataAttributes["closed"] = CommonPopupDataAttributes.closed] = "closed";
-	/**
-	* Present when the dialog is animating in.
-	*/
-	DialogPopupDataAttributes[DialogPopupDataAttributes["startingStyle"] = CommonPopupDataAttributes.startingStyle] = "startingStyle";
-	/**
-	* Present when the dialog is animating out.
-	*/
-	DialogPopupDataAttributes[DialogPopupDataAttributes["endingStyle"] = CommonPopupDataAttributes.endingStyle] = "endingStyle";
-	/**
-	* Present when the dialog is nested within another dialog.
-	*/
-	DialogPopupDataAttributes["nested"] = "data-nested";
-	/**
-	* Present when the dialog has other open dialogs nested within it.
-	*/
-	DialogPopupDataAttributes["nestedDialogOpen"] = "data-nested-dialog-open";
-	return DialogPopupDataAttributes;
-}({});
-//#endregion
-//#region node_modules/@base-ui/react/dialog/portal/DialogPortalContext.mjs
-var DialogPortalContext = /*#__PURE__*/ import_react.createContext(void 0);
-function useDialogPortalContext() {
-	const value = import_react.useContext(DialogPortalContext);
-	if (value === void 0) throw new Error(formatErrorMessage(26));
-	return value;
-}
-//#endregion
-//#region node_modules/@base-ui/react/internals/composite/composite.mjs
-var ARROW_UP = "ArrowUp";
-var ARROW_DOWN = "ArrowDown";
-var ARROW_LEFT = "ArrowLeft";
-var ARROW_RIGHT = "ArrowRight";
-var HOME = "Home";
-var HORIZONTAL_KEYS = /* @__PURE__ */ new Set([ARROW_LEFT, ARROW_RIGHT]);
-var VERTICAL_KEYS = /* @__PURE__ */ new Set([ARROW_UP, ARROW_DOWN]);
-var ARROW_KEYS = /* @__PURE__ */ new Set([...HORIZONTAL_KEYS, ...VERTICAL_KEYS]);
-var COMPOSITE_KEYS = /* @__PURE__ */ new Set([
-	...ARROW_KEYS,
-	HOME,
-	"End"
-]);
-//#endregion
-//#region node_modules/@base-ui/react/dialog/popup/DialogPopup.mjs
-var stateAttributesMapping = {
-	...popupStateMapping,
-	...transitionStatusMapping,
-	nestedDialogOpen(value) {
-		return value ? { [DialogPopupDataAttributes.nestedDialogOpen]: "" } : null;
-	}
-};
-/**
-* A container for the dialog contents.
-* Renders a `<div>` element.
-*
-* Documentation: [Base UI Dialog](https://base-ui.com/react/components/dialog)
-*/
-var DialogPopup = /*#__PURE__*/ import_react.forwardRef(function DialogPopup(componentProps, forwardedRef) {
-	const { render, className, style, finalFocus, initialFocus, ...elementProps } = componentProps;
-	const { store } = useDialogRootContext();
-	const descriptionElementId = store.useState("descriptionElementId");
-	const disablePointerDismissal = store.useState("disablePointerDismissal");
-	const floatingRootContext = store.useState("floatingRootContext");
-	const rootPopupProps = store.useState("popupProps");
-	const modal = store.useState("modal");
-	const mounted = store.useState("mounted");
-	const nested = store.useState("nested");
-	const nestedOpenDialogCount = store.useState("nestedOpenDialogCount");
-	const open = store.useState("open");
-	const openMethod = store.useState("openMethod");
-	const titleElementId = store.useState("titleElementId");
-	const transitionStatus = store.useState("transitionStatus");
-	const role = store.useState("role");
-	const floatingId = floatingRootContext.useState("floatingId");
-	const popupId = elementProps.id ?? floatingId;
-	useDialogPortalContext();
-	useOpenChangeComplete({
-		open,
-		ref: store.context.popupRef,
-		onComplete() {
-			if (open) store.context.onOpenChangeComplete?.(true);
-		}
-	});
-	const resolvedInitialFocus = initialFocus === void 0 ? createDefaultInitialFocus(store.context.popupRef) : initialFocus;
-	const nestedDialogOpen = nestedOpenDialogCount > 0;
-	const setPopupElement = store.useStateSetter("popupElement");
-	const element = useRenderElement("div", componentProps, {
-		state: {
-			open,
-			nested,
-			transitionStatus,
-			nestedDialogOpen
-		},
-		props: [
-			rootPopupProps,
-			{
-				id: popupId,
-				"aria-labelledby": titleElementId ?? void 0,
-				"aria-describedby": descriptionElementId ?? void 0,
-				role,
-				...FOCUSABLE_POPUP_PROPS,
-				hidden: !mounted,
-				onKeyDown(event) {
-					if (COMPOSITE_KEYS.has(event.key)) event.stopPropagation();
-				},
-				style: { [DialogPopupCssVars.nestedDialogs]: nestedOpenDialogCount }
-			},
-			elementProps
-		],
-		ref: [
-			forwardedRef,
-			store.context.popupRef,
-			setPopupElement
-		],
-		stateAttributesMapping
-	});
-	return /*#__PURE__*/ (0, import_jsx_runtime.jsx)(FloatingFocusManager, {
-		context: floatingRootContext,
-		openInteractionType: openMethod,
-		disabled: !mounted,
-		closeOnFocusOut: !disablePointerDismissal,
-		initialFocus: resolvedInitialFocus,
-		returnFocus: finalFocus,
-		modal: modal !== false,
-		restoreFocus: "popup",
-		children: element
-	});
-});
-//#endregion
-//#region node_modules/@base-ui/utils/inertValue.mjs
-function inertValue(value) {
-	if (isReactVersionAtLeast(19)) return value;
-	return value ? "true" : void 0;
-}
-//#endregion
-//#region node_modules/@base-ui/react/utils/InternalBackdrop.mjs
-/**
-* @internal
-*/
-var InternalBackdrop = /*#__PURE__*/ import_react.forwardRef(function InternalBackdrop(props, ref) {
-	const { cutout, ...otherProps } = props;
-	let clipPath;
-	if (cutout) {
-		const rect = cutout.getBoundingClientRect();
-		clipPath = `polygon(0% 0%,100% 0%,100% 100%,0% 100%,0% 0%,${rect.left}px ${rect.top}px,${rect.left}px ${rect.bottom}px,${rect.right}px ${rect.bottom}px,${rect.right}px ${rect.top}px,${rect.left}px ${rect.top}px)`;
-	}
-	return /*#__PURE__*/ (0, import_jsx_runtime.jsx)("div", {
-		ref,
-		role: "presentation",
-		"data-base-ui-inert": "",
-		...otherProps,
-		style: {
-			position: "fixed",
-			inset: 0,
-			userSelect: "none",
-			WebkitUserSelect: "none",
-			clipPath
-		}
-	});
-});
-//#endregion
-//#region node_modules/@base-ui/react/dialog/portal/DialogPortal.mjs
-/**
-* A portal element that moves the popup to a different part of the DOM.
-* By default, the portal element is appended to `<body>`.
-* Renders a `<div>` element.
-*
-* Documentation: [Base UI Dialog](https://base-ui.com/react/components/dialog)
-*/
-var DialogPortal = /*#__PURE__*/ import_react.forwardRef(function DialogPortal(props, forwardedRef) {
-	const { keepMounted = false, ...portalProps } = props;
-	const { store } = useDialogRootContext();
-	const mounted = store.useState("mounted");
-	const modal = store.useState("modal");
-	const open = store.useState("open");
-	if (!(mounted || keepMounted)) return null;
-	return /*#__PURE__*/ (0, import_jsx_runtime.jsx)(DialogPortalContext.Provider, {
-		value: keepMounted,
-		children: /*#__PURE__*/ (0, import_jsx_runtime.jsxs)(FloatingPortal, {
-			ref: forwardedRef,
-			...portalProps,
-			children: [mounted && modal === true && /*#__PURE__*/ (0, import_jsx_runtime.jsx)(InternalBackdrop, {
-				ref: store.context.internalBackdropRef,
-				inert: inertValue(!open)
-			}), props.children]
-		})
-	});
-});
 //#endregion
 //#region node_modules/@base-ui/react/dialog/title/DialogTitle.mjs
 /**
@@ -5432,4 +5198,251 @@ var DialogTitle = /*#__PURE__*/ import_react.forwardRef(function DialogTitle(com
 	});
 });
 //#endregion
-export { DialogBackdrop as a, SwitchRoot as c, Input as d, require_react_dom as f, DialogDescription as i, require_with_selector as l, require_react as m, DialogPortal as n, AlertDialogRoot as o, require_jsx_runtime as p, DialogPopup as r, SwitchThumb as s, DialogTitle as t, Button as u };
+//#region node_modules/@base-ui/react/internals/useValueChanged.mjs
+function useValueChanged(value, onChange) {
+	const valueRef = import_react.useRef(value);
+	const onChangeCallback = useStableCallback(onChange);
+	useIsoLayoutEffect(() => {
+		if (valueRef.current === value) return;
+		onChangeCallback(valueRef.current);
+	}, [value, onChangeCallback]);
+	useIsoLayoutEffect(() => {
+		valueRef.current = value;
+	}, [value]);
+}
+//#endregion
+//#region node_modules/@base-ui/react/switch/root/SwitchRootContext.mjs
+var SwitchRootContext = /*#__PURE__*/ import_react.createContext(void 0);
+function useSwitchRootContext() {
+	const context = import_react.useContext(SwitchRootContext);
+	if (context === void 0) throw new Error(formatErrorMessage(63));
+	return context;
+}
+//#endregion
+//#region node_modules/@base-ui/react/switch/root/SwitchRootDataAttributes.mjs
+var SwitchRootDataAttributes = /*#__PURE__*/ function(SwitchRootDataAttributes) {
+	/**
+	* Present when the switch is checked.
+	*/
+	SwitchRootDataAttributes["checked"] = "data-checked";
+	/**
+	* Present when the switch is not checked.
+	*/
+	SwitchRootDataAttributes["unchecked"] = "data-unchecked";
+	/**
+	* Present when the switch is disabled.
+	*/
+	SwitchRootDataAttributes["disabled"] = "data-disabled";
+	/**
+	* Present when the switch is readonly.
+	*/
+	SwitchRootDataAttributes["readonly"] = "data-readonly";
+	/**
+	* Present when the switch is required.
+	*/
+	SwitchRootDataAttributes["required"] = "data-required";
+	/**
+	* Present when the switch is in a valid state (when wrapped in Field.Root).
+	*/
+	SwitchRootDataAttributes["valid"] = "data-valid";
+	/**
+	* Present when the switch is in an invalid state (when wrapped in Field.Root).
+	*/
+	SwitchRootDataAttributes["invalid"] = "data-invalid";
+	/**
+	* Present when the switch has been touched (when wrapped in Field.Root).
+	*/
+	SwitchRootDataAttributes["touched"] = "data-touched";
+	/**
+	* Present when the switch's value has changed (when wrapped in Field.Root).
+	*/
+	SwitchRootDataAttributes["dirty"] = "data-dirty";
+	/**
+	* Present when the switch is active (when wrapped in Field.Root).
+	*/
+	SwitchRootDataAttributes["filled"] = "data-filled";
+	/**
+	* Present when the switch is focused (when wrapped in Field.Root).
+	*/
+	SwitchRootDataAttributes["focused"] = "data-focused";
+	return SwitchRootDataAttributes;
+}({});
+//#endregion
+//#region node_modules/@base-ui/react/switch/stateAttributesMapping.mjs
+var stateAttributesMapping = {
+	...fieldValidityMapping,
+	checked(value) {
+		if (value) return { [SwitchRootDataAttributes.checked]: "" };
+		return { [SwitchRootDataAttributes.unchecked]: "" };
+	}
+};
+//#endregion
+//#region node_modules/@base-ui/react/switch/root/SwitchRoot.mjs
+/**
+* Represents the switch itself.
+* Renders a `<span>` element and a hidden `<input>` beside.
+*
+* Documentation: [Base UI Switch](https://base-ui.com/react/components/switch)
+*/
+var SwitchRoot = /*#__PURE__*/ import_react.forwardRef(function SwitchRoot(componentProps, forwardedRef) {
+	const { checked: checkedProp, className, defaultChecked, "aria-labelledby": ariaLabelledByProp, form, id: idProp, inputRef: externalInputRef, name: nameProp, nativeButton = false, onCheckedChange, readOnly = false, required = false, disabled: disabledProp = false, render, uncheckedValue, value, style, ...elementProps } = componentProps;
+	const { clearErrors } = useFormContext();
+	const { state: fieldState, setTouched, setDirty, validityData, setFilled, setFocused, validationMode, disabled: fieldDisabled, name: fieldName, validation } = useFieldRootContext();
+	const { labelId } = useLabelableContext();
+	const disabled = fieldDisabled || disabledProp;
+	const name = fieldName ?? nameProp;
+	const inputRef = import_react.useRef(null);
+	const handleInputRef = useMergedRefs(inputRef, externalInputRef, validation.inputRef);
+	const switchRef = import_react.useRef(null);
+	const id = useBaseUiId();
+	const controlId = useLabelableId({
+		id: idProp,
+		implicit: false,
+		controlRef: switchRef
+	});
+	const hiddenInputId = nativeButton ? void 0 : controlId;
+	const [checked, setCheckedState] = useControlled({
+		controlled: checkedProp,
+		default: Boolean(defaultChecked),
+		name: "Switch",
+		state: "checked"
+	});
+	useRegisterFieldControl(switchRef, id, checked, void 0, !disabled, nameProp);
+	useIsoLayoutEffect(() => {
+		if (inputRef.current) setFilled(inputRef.current.checked);
+	}, [inputRef, setFilled]);
+	useValueChanged(checked, () => {
+		clearErrors(name);
+		setDirty(checked !== validityData.initialValue);
+		setFilled(checked);
+		validation.change(checked);
+	});
+	const { getButtonProps, buttonRef } = useButton({
+		disabled,
+		native: nativeButton
+	});
+	const ariaLabelledBy = useAriaLabelledBy(ariaLabelledByProp, labelId, inputRef, !nativeButton, hiddenInputId);
+	const rootProps = {
+		id: nativeButton ? controlId : id,
+		role: "switch",
+		"aria-checked": checked,
+		"aria-readonly": readOnly || void 0,
+		"aria-required": required || void 0,
+		"aria-labelledby": ariaLabelledBy,
+		onFocus() {
+			if (!disabled) setFocused(true);
+		},
+		onBlur() {
+			const element = inputRef.current;
+			if (!element || disabled) return;
+			setTouched(true);
+			setFocused(false);
+			if (validationMode === "onBlur") validation.commit(element.checked);
+		},
+		onClick(event) {
+			if (readOnly || disabled) return;
+			event.preventDefault();
+			const input = inputRef.current;
+			if (!input) return;
+			input.dispatchEvent(new (getWindow(input)).PointerEvent("click", {
+				bubbles: true,
+				shiftKey: event.shiftKey,
+				ctrlKey: event.ctrlKey,
+				altKey: event.altKey,
+				metaKey: event.metaKey
+			}));
+		}
+	};
+	const inputProps = mergeProps({
+		checked,
+		disabled,
+		form,
+		id: hiddenInputId,
+		name,
+		required,
+		style: name ? visuallyHiddenInput : visuallyHidden,
+		tabIndex: -1,
+		type: "checkbox",
+		"aria-hidden": true,
+		ref: handleInputRef,
+		onChange(event) {
+			if (event.nativeEvent.defaultPrevented) return;
+			if (readOnly) {
+				event.preventDefault();
+				return;
+			}
+			const nextChecked = event.currentTarget.checked;
+			const eventDetails = createChangeEventDetails(none, event.nativeEvent);
+			onCheckedChange?.(nextChecked, eventDetails);
+			if (eventDetails.isCanceled) return;
+			setCheckedState(nextChecked);
+		},
+		onFocus() {
+			switchRef.current?.focus();
+		}
+	}, (props) => validation.getValidationProps(disabled, props), value !== void 0 ? { value } : EMPTY_OBJECT);
+	const state = import_react.useMemo(() => ({
+		...fieldState,
+		checked,
+		disabled,
+		readOnly,
+		required
+	}), [
+		fieldState,
+		checked,
+		disabled,
+		readOnly,
+		required
+	]);
+	const element = useRenderElement("span", componentProps, {
+		state,
+		ref: [
+			forwardedRef,
+			switchRef,
+			buttonRef
+		],
+		props: [
+			rootProps,
+			elementProps,
+			getButtonProps,
+			(props) => validation.getValidationProps(disabled, props)
+		],
+		stateAttributesMapping
+	});
+	return /*#__PURE__*/ (0, import_jsx_runtime.jsxs)(SwitchRootContext.Provider, {
+		value: state,
+		children: [
+			element,
+			!checked && name && uncheckedValue !== void 0 && /*#__PURE__*/ (0, import_jsx_runtime.jsx)("input", {
+				type: "hidden",
+				form,
+				name,
+				value: uncheckedValue,
+				disabled
+			}),
+			/*#__PURE__*/ (0, import_jsx_runtime.jsx)("input", {
+				...inputProps,
+				suppressHydrationWarning: true
+			})
+		]
+	});
+});
+//#endregion
+//#region node_modules/@base-ui/react/switch/thumb/SwitchThumb.mjs
+/**
+* The movable part of the switch that indicates whether the switch is on or off.
+* Renders a `<span>`.
+*
+* Documentation: [Base UI Switch](https://base-ui.com/react/components/switch)
+*/
+var SwitchThumb = /*#__PURE__*/ import_react.forwardRef(function SwitchThumb(componentProps, forwardedRef) {
+	const { render, className, style, ...elementProps } = componentProps;
+	return useRenderElement("span", componentProps, {
+		state: useSwitchRootContext(),
+		ref: forwardedRef,
+		stateAttributesMapping,
+		props: elementProps
+	});
+});
+//#endregion
+export { DialogPortal as a, DialogClose as c, Input as d, require_react_dom as f, DialogRoot as i, DialogBackdrop as l, require_react as m, SwitchRoot as n, DialogPopup as o, require_jsx_runtime as p, DialogTitle as r, require_with_selector as s, SwitchThumb as t, Button as u };

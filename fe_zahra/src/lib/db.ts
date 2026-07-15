@@ -1,5 +1,5 @@
 /**
- * Sentinel Attend — Local Data Layer
+ * Geo Attend — Local Data Layer
  * -----------------------------------
  * The previous version of this app mixed Supabase calls (for `attendances`
  * and `vendor_locations`) with ad-hoc localStorage writes for employees.

@@ -1,11 +1,11 @@
 {
-  "compatibility_date": "2026-07-05",
+  "compatibility_date": "2026-07-15",
   "main": "index.mjs",
   "assets": {
     "binding": "ASSETS",
     "directory": "..\\public"
   },
-  "name": "tanstack-start-ts",
+  "name": "azzahrawib-absensi-cloud-fe-zahra",
   "compatibility_flags": [
     "nodejs_compat"
   ],

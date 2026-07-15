@@ -130,13 +130,13 @@ function CheckinScreen() {
     });
     toast.success(attendanceType === "Check-In" ? "Check-In Berhasil!" : "Check-Out Berhasil!");
     setSubmitting(false);
-    nav({ to: "/employee/" });
+    nav({ to: "/employee" });
   };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col">
       <div className="p-4 flex items-center justify-between border-b border-slate-800">
-        <button onClick={() => nav({ to: "/employee/" })} className="p-2 -ml-2 rounded-full hover:bg-slate-800">
+        <button onClick={() => nav({ to: "/employee" })} className="p-2 -ml-2 rounded-full hover:bg-slate-800">
           <X className="w-5 h-5" />
         </button>
         <p className="font-semibold text-sm">{attendanceType === "Check-In" ? "Presensi Masuk" : "Presensi Keluar"}</p>

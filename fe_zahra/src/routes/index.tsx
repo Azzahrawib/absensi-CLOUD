@@ -1,77 +1,59 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Fingerprint, ArrowRight, Lock, Loader2, AlertTriangle } from "lucide-react";
+import { Fingerprint, ArrowRight, Lock, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "../components/ui/alert-dialog";
 import { toast } from "sonner";
+import { supabase } from "../lib/supabaseService";
 
 export const Route = createFileRoute("/")({
   component: Login,
 });
 
 function Login() {
-  const nav = useNavigate();
-  const [checking, setChecking] = useState(false);
-  const [showError, setShowError] = useState(false);
-
-  // State kredensial
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
     if (!email || !password) {
-      toast.error("Formulir Wajib Diisi", { 
-        description: "Mohon masukkan email korporat dan password Anda." 
+      toast.error("Formulir Wajib Diisi", {
+        description: "Mohon masukkan email korporat dan password Anda.",
       });
       return;
     }
 
-    setChecking(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setChecking(false);
-
-    // Ambil data karyawan hasil CRUD HRD dari localStorage
-    const savedUsers = localStorage.getItem("sentinel_users_db");
-    const userDatabase = savedUsers ? JSON.parse(savedUsers) : [];
-
-    // Cek apakah email terdaftar (Password bebas buat demo)
-    const matchedEmployee = userDatabase.find(
-      (emp: any) => emp.email?.trim().toLowerCase() === email.trim().toLowerCase()
-    ) || (email === "aisha.r@sentinel.co" ? { id: "EMP-9999", full_name: "Azzahra Asabri", email: "aisha.r@sentinel.co", role: "IT Intern" } : null);
-
-    if (!matchedEmployee) {
-      toast.error("Akses Ditolak!", {
-        description: "Email korporat Anda belum terdaftar di sistem HRD.",
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
       });
-      return;
+
+      if (error) {
+        // Tangkap error dari Supabase dan tampilkan pesan generik
+        throw error;
+      }
+
+      if (data.user) {
+        // Ambil nama dari metadata jika ada, jika tidak, gunakan placeholder
+        const userName = data.user.user_metadata?.full_name || "Karyawan";
+        toast.success(`Selamat Datang, ${userName}!`);
+        
+        // Arahkan ke dashboard setelah berhasil login
+        navigate({ to: "/employee" });
+      }
+    } catch (error) {
+      // Tampilkan pesan error yang manusiawi untuk semua jenis kegagalan
+      toast.error("Kredensial Tidak Valid", {
+        description: "Email atau password salah. Silakan hubungi HRD jika masalah berlanjut.",
+      });
+      console.error("Authentication Error:", error);
+    } finally {
+      setIsLoading(false);
     }
-
-    // Cek Device Binding (Simulasi)
-    const bindingKey = `device_bound_status_${matchedEmployee.id}`;
-    const hasBinding = localStorage.getItem(bindingKey);
-
-    if (hasBinding === "blocked") {
-      setShowError(true);
-      return;
-    }
-
-    if (!hasBinding) {
-      localStorage.setItem(bindingKey, "bound_to_current_hardware");
-    }
-
-    toast.success(`Selamat Datang, ${matchedEmployee.full_name || matchedEmployee.name}!`);
-    sessionStorage.setItem("active_session_user", JSON.stringify(matchedEmployee));
-    nav({ to: "/employee" });
   };
 
   return (
@@ -82,7 +64,7 @@ function Login() {
             <Fingerprint className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight">Sentinel Attend</h1>
+            <h1 className="text-xl font-bold tracking-tight">Geo Attend</h1>
             <p className="text-xs text-slate-400">Secure Workforce Verification</p>
           </div>
         </div>
@@ -101,50 +83,42 @@ function Login() {
                 placeholder="contoh: joko@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                disabled={isLoading}
                 className="bg-slate-800/60 border-slate-700 text-slate-100 placeholder:text-slate-600 focus:border-indigo-500"
               />
             </div>
             <div className="space-y-2">
               <Label className="text-slate-300">Password</Label>
-              <Input 
-                type="password" 
-                placeholder="Bebas ketik apa saja untuk demo"
+              <Input
+                type="password"
+                placeholder="Masukkan password Anda"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-slate-800/60 border-slate-700 text-slate-100 placeholder:text-slate-600 focus:border-indigo-500" 
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                disabled={isLoading}
+                className="bg-slate-800/60 border-slate-700 text-slate-100 placeholder:text-slate-600 focus:border-indigo-500"
               />
             </div>
 
-            <Button 
-              onClick={handleLogin} 
-              disabled={checking} 
+            <Button
+              onClick={handleLogin}
+              disabled={isLoading}
               className="w-full bg-indigo-600 hover:bg-indigo-500 mt-2 h-11 font-medium transition-colors"
             >
-              {checking ? (
+              {isLoading ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Memverifikasi...</>
               ) : (
-                <div className="flex items-center justify-center gap-2"><Lock className="w-4 h-4" /><span>Secure Sign In</span><ArrowRight className="w-4 h-4" /></div>
+                <div className="flex items-center justify-center gap-2">
+                  <Lock className="w-4 h-4" />
+                  <span>Secure Sign In</span>
+                  <ArrowRight className="w-4 h-4" />
+                </div>
               )}
             </Button>
           </div>
         </div>
       </div>
-
-      <AlertDialog open={showError} onOpenChange={setShowError}>
-        <AlertDialogContent className="bg-slate-900 border-slate-800 text-white">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-red-500">
-              <AlertTriangle className="w-5 h-5" /> Keamanan Terkunci!
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-400 text-sm">
-              Sistem mendeteksi Anda mencoba masuk menggunakan HP yang berbeda. Harap hubungi HRD untuk melakukan <b>Reset Device Binding</b>.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction className="bg-indigo-600 text-white hover:bg-indigo-500" onClick={() => setShowError(false)}>Mengerti</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

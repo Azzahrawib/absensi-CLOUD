@@ -1,0 +1,128 @@
+//#region node_modules/.nitro/vite/services/ssr/assets/db-_r_BwSlB.js
+var KEYS = {
+	employees: "sentinel_employees_db",
+	vendors: "sentinel_vendors_db",
+	attendance: "sentinel_attendance_logs",
+	seq: "sentinel_seq_counters",
+	session: "sentinel_active_session_user"
+};
+function read(key, fallback) {
+	if (typeof window === "undefined") return fallback;
+	try {
+		const raw = localStorage.getItem(key);
+		return raw ? JSON.parse(raw) : fallback;
+	} catch {
+		return fallback;
+	}
+}
+function write(key, value) {
+	if (typeof window === "undefined") return;
+	localStorage.setItem(key, JSON.stringify(value));
+}
+function nextId(prefix) {
+	const counters = read(KEYS.seq, {});
+	const next = (counters[prefix] ?? 0) + 1;
+	counters[prefix] = next;
+	write(KEYS.seq, counters);
+	return `${prefix}-${String(next).padStart(4, "0")}`;
+}
+/** Seed a first vendor + employee on very first run so the app isn't empty. */
+function seedIfEmpty() {
+	if (read(KEYS.vendors, []).length === 0) {
+		const seedVendor = {
+			id: nextId("VEN"),
+			name: "Client Site — Sudirman Tower",
+			address: "Jl. Jend. Sudirman Kav. 52-53, Jakarta Selatan",
+			latitude: -6.2246,
+			longitude: 106.809,
+			radius_m: 150,
+			created_at: (/* @__PURE__ */ new Date()).toISOString()
+		};
+		write(KEYS.vendors, [seedVendor]);
+	}
+	if (read(KEYS.employees, []).length === 0) {
+		const currentVendors = read(KEYS.vendors, []);
+		const seedEmployee = {
+			id: nextId("EMP"),
+			full_name: "Azzahra Asabri",
+			email: "aisha.r@sentinel.co",
+			role: "IT Intern",
+			department: "Engineering",
+			phone: "+62 812-3456-7890",
+			vendor_id: currentVendors[0]?.id ?? null,
+			created_at: (/* @__PURE__ */ new Date()).toISOString()
+		};
+		write(KEYS.employees, [seedEmployee]);
+	}
+}
+seedIfEmpty();
+function listEmployees() {
+	return read(KEYS.employees, []);
+}
+function getEmployeeById(id) {
+	return listEmployees().find((e) => e.id === id);
+}
+function updateEmployee(id, patch) {
+	const employees = listEmployees();
+	const idx = employees.findIndex((e) => e.id === id);
+	if (idx === -1) return void 0;
+	employees[idx] = {
+		...employees[idx],
+		...patch
+	};
+	write(KEYS.employees, employees);
+	return employees[idx];
+}
+function deleteEmployee(id) {
+	write(KEYS.employees, listEmployees().filter((e) => e.id !== id));
+}
+function listVendors() {
+	return read(KEYS.vendors, []);
+}
+function getVendorById(id) {
+	if (!id) return void 0;
+	return listVendors().find((v) => v.id === id);
+}
+function countEmployeesForVendor(vendorId) {
+	return listEmployees().filter((e) => e.vendor_id === vendorId).length;
+}
+function listAttendance() {
+	return read(KEYS.attendance, []).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+}
+function listAttendanceByEmployee(employeeId) {
+	return listAttendance().filter((l) => l.employee_id === employeeId);
+}
+function getLatestAttendanceByEmployee(employeeId) {
+	return listAttendanceByEmployee(employeeId)[0];
+}
+function createAttendance(data) {
+	const logs = read(KEYS.attendance, []);
+	const log = {
+		...data,
+		id: nextId("LOG"),
+		created_at: (/* @__PURE__ */ new Date()).toISOString()
+	};
+	write(KEYS.attendance, [log, ...logs]);
+	return log;
+}
+/**
+* Lightweight "who is using the employee app right now" helper. In lieu of a
+* real auth system, it defaults to the first registered employee and persists
+* the choice for the browser tab (sessionStorage), so the employee UI is
+* always driven by real Employee records instead of a hardcoded name.
+*/
+function getActiveEmployee() {
+	if (typeof window !== "undefined") {
+		const raw = sessionStorage.getItem(KEYS.session);
+		if (raw) try {
+			const { id } = JSON.parse(raw);
+			const found = getEmployeeById(id);
+			if (found) return found;
+		} catch {}
+	}
+	const [first] = listEmployees();
+	if (first && typeof window !== "undefined") sessionStorage.setItem(KEYS.session, JSON.stringify({ id: first.id }));
+	return first;
+}
+//#endregion
+export { getLatestAttendanceByEmployee as a, getActiveEmployee as i, createAttendance as n, getVendorById as o, deleteEmployee as r, updateEmployee as s, countEmployeesForVendor as t };

@@ -1,5 +1,5 @@
 // ========================================================
-// SENTINEL ATTEND — Core Error Reporting System
+// Geo Attend — Core Error Reporting System
 // ========================================================
 
 type AppErrorOptions = {

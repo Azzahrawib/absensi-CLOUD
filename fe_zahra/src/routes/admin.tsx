@@ -2,9 +2,25 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ClipboardList, Users, MapPinned, Bell, Fingerprint, WifiOff, Wifi,
-  AlertTriangle, CheckCircle2, RefreshCw, UserPlus, Radio, Loader2,
-  Pencil, Trash2, MapPin, Image as ImageIcon, X, Crosshair, Building2,
+  ClipboardList,
+  Users,
+  MapPinned,
+  Bell,
+  Fingerprint,
+  WifiOff,
+  Wifi,
+  AlertTriangle,
+  CheckCircle2,
+  RefreshCw,
+  UserPlus,
+  Radio,
+  Loader2,
+  Pencil,
+  Trash2,
+  MapPin,
+  Image as ImageIcon,
+  Building2,
+  Crosshair, // FIX 1: Sudah ditambahkan ke dalam daftar import lucide-react
 } from "lucide-react";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
@@ -14,19 +30,44 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { toast } from "sonner";
+
+// Import integrasi cloud Supabase service yang baru
+import { inviteNewEmployee, supabase } from "../lib/supabaseService";
+
+// Mengambil fungsi lokal yang tersisa
 import {
-  type Employee, type Vendor, type AttendanceLog,
-  listEmployees, createEmployee, updateEmployee, deleteEmployee,
-  listVendors, createVendor, updateVendor, deleteVendor, countEmployeesForVendor,
-  listAttendance,
+  type Employee, type Vendor,
+  updateEmployee, deleteEmployee,
+  countEmployeesForVendor,
 } from "../lib/db";
+
+// Type lokal agar kompatibel dengan schema Supabase
+type SupabaseAttendanceStatus = "success" | "flagged_mock_gps" | "outside_geofence";
+
+type SupabaseAttendanceLog = {
+  id: string;
+  employee_id: string;
+  vendor_id: string | null;
+  type: string; 
+  status: SupabaseAttendanceStatus;
+  distance_m: number;
+  latitude: number;
+  longitude: number;
+  photo_data: string | null;
+  anomaly_note?: string | null;
+  location_name?: string | null;
+  location_type?: string | null;
+  created_at: string;
+};
+
+type AttendanceLogView = Omit<SupabaseAttendanceLog, "photo_data"> & { photo: string | null };
 
 export const Route = createFileRoute("/admin")({
   component: AdminDashboard,
 });
 
 type View = "reports" | "monitoring" | "devices" | "locations";
-type EmployeeSummary = { profile: Employee; latestAttendance?: AttendanceLog };
+type EmployeeSummary = { profile: Employee; latestAttendance?: AttendanceLogView };
 
 const emptyEmployeeForm = {
   full_name: "", email: "", role: "", department: "", phone: "", vendor_id: "" as string,
@@ -51,13 +92,42 @@ function AdminDashboard() {
     };
   }, []);
 
-  const employeesQuery = useQuery({ queryKey: ["employees"], queryFn: async () => listEmployees() });
-  const vendorsQuery = useQuery({ queryKey: ["vendors"], queryFn: async () => listVendors() });
-  const attendanceQuery = useQuery({ queryKey: ["attendance"], queryFn: async () => listAttendance() });
+  // Fetch data master real-time dari Supabase
+  const employeesQuery = useQuery({
+    queryKey: ["employees"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("employees").select("*");
+      if (error) throw error;
+      return (data ?? []) as Employee[];
+    },
+  });
+
+  const vendorsQuery = useQuery({
+    queryKey: ["vendors"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("vendors").select("*");
+      if (error) throw error;
+      return (data ?? []) as Vendor[];
+    },
+  });
+
+  const attendanceQuery = useQuery({
+    queryKey: ["attendance"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("attendances").select("*");
+      if (error) throw error;
+      const rows = (data ?? []) as SupabaseAttendanceLog[];
+      const mapped: AttendanceLogView[] = rows.map((r) => ({
+        ...r,
+        photo: r.photo_data,
+      }));
+      return mapped;
+    },
+  });
 
   const employees = employeesQuery.data ?? [];
   const vendors = vendorsQuery.data ?? [];
-  const attendance = attendanceQuery.data ?? [];
+  const attendance = (attendanceQuery.data ?? []) as AttendanceLogView[];
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["employees"] });
@@ -65,8 +135,9 @@ function AdminDashboard() {
     queryClient.invalidateQueries({ queryKey: ["attendance"] });
   };
 
+  // FIX 2 & 3: Tipe data Map diganti ke AttendanceLogView agar cocok dengan model Supabase
   const employeeSummaries: EmployeeSummary[] = useMemo(() => {
-    const latestByEmployee = new Map<string, AttendanceLog>();
+    const latestByEmployee = new Map<string, AttendanceLogView>();
     attendance.forEach((log) => {
       const current = latestByEmployee.get(log.employee_id);
       if (!current || new Date(log.created_at).getTime() > new Date(current.created_at).getTime()) {
@@ -87,14 +158,13 @@ function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex">
-      {/* SIDEBAR — permanent, active state highlighted */}
       <aside className="hidden md:flex w-64 bg-slate-900 text-slate-100 flex-col shrink-0">
         <div className="p-5 flex items-center gap-3 border-b border-slate-800">
           <div className="w-9 h-9 rounded-lg bg-indigo-600 grid place-items-center">
             <Fingerprint className="w-5 h-5" />
           </div>
           <div>
-            <p className="font-bold text-sm">Sentinel Attend</p>
+            <p className="font-bold text-sm">GeoAttend</p>
             <p className="text-[10px] text-slate-400">HRD Admin Console</p>
           </div>
         </div>
@@ -105,7 +175,6 @@ function AdminDashboard() {
               <button
                 key={n.id}
                 onClick={() => setView(n.id)}
-                aria-current={active ? "page" : undefined}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-left transition-colors relative ${
                   active ? "bg-indigo-600 text-white shadow-sm" : "text-slate-300 hover:bg-slate-800"
                 }`}
@@ -157,6 +226,7 @@ function EmployeesPanel({
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyEmployeeForm);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const vendorName = (id: string | null) => vendors.find((v) => v.id === id)?.name ?? "Belum ditentukan";
 
@@ -175,11 +245,13 @@ function EmployeesPanel({
     setOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.full_name.trim() || !form.email.trim()) {
       toast.error("Nama dan email wajib diisi.");
       return;
     }
+
+    setIsSubmitting(true);
     const payload = {
       full_name: form.full_name.trim(),
       email: form.email.trim(),
@@ -188,29 +260,52 @@ function EmployeesPanel({
       phone: form.phone.trim(),
       vendor_id: form.vendor_id || null,
     };
-    if (editingId) {
-      updateEmployee(editingId, payload);
-      toast.success("Data karyawan diperbarui.");
-    } else {
-      createEmployee(payload);
-      toast.success("Karyawan baru berhasil didaftarkan!");
+
+    try {
+      if (editingId) {
+        await updateEmployee(editingId, payload);
+        toast.success("Data karyawan diperbarui.");
+      } else {
+        const res = await inviteNewEmployee(payload);
+        if (res.success) {
+          toast.success("Karyawan baru diundang! Email verifikasi telah terkirim.");
+        } else {
+          throw new Error(res.error || "Gagal melakukan registrasi.");
+        }
+      }
+      onChanged();
+      setOpen(false);
+      setForm(emptyEmployeeForm);
+      setEditingId(null);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Terjadi kesalahan integrasi database cloud.");
+    } finally {
+      setIsSubmitting(false);
     }
-    onChanged();
-    setOpen(false);
-    setForm(emptyEmployeeForm);
-    setEditingId(null);
   };
 
   const handleDelete = (emp: Employee) => {
-    if (!window.confirm(`Hapus karyawan ${emp.full_name} (${emp.id})? Tindakan ini tidak bisa dibatalkan.`)) return;
+    if (!window.confirm(`Hapus karyawan ${emp.full_name}? Tindakan ini tidak bisa dibatalkan.`)) return;
     deleteEmployee(emp.id);
     toast.success("Karyawan dihapus.");
     onChanged();
   };
 
-  const handleResetDevice = (empId: string) => {
-    localStorage.removeItem(`device_bound_status_${empId}`);
-    toast.success("Device Binding berhasil direset!");
+  const handleResetDevice = async (empId: string) => {
+    try {
+      const { error } = await supabase
+        .from('device_bindings')
+        .update({ is_active: false })
+        .eq('employee_id', empId);
+
+      if (error) throw error;
+
+      localStorage.removeItem(`device_bound_status_${empId}`);
+      toast.success("Device Binding berhasil direset di Cloud Supabase!");
+    } catch (err: any) {
+      toast.error("Gagal mereset perangkat: " + err.message);
+    }
   };
 
   return (
@@ -236,7 +331,6 @@ function EmployeesPanel({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
                 <TableHead>Nama Karyawan</TableHead>
                 <TableHead>Email Login</TableHead>
                 <TableHead>Jabatan / Dept</TableHead>
@@ -247,7 +341,6 @@ function EmployeesPanel({
             <TableBody>
               {employees.map((emp) => (
                 <TableRow key={emp.id}>
-                  <TableCell className="font-mono text-xs">{emp.id}</TableCell>
                   <TableCell className="font-medium">{emp.full_name}</TableCell>
                   <TableCell>{emp.email}</TableCell>
                   <TableCell>
@@ -280,7 +373,7 @@ function EmployeesPanel({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="bg-slate-900 border-slate-800 text-white">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Edit Data Karyawan" : "Registrasi Karyawan Baru"}</DialogTitle>
+            <DialogTitle>{editingId ? "Edit Data Karyawan" : "Registrasi Karyawan Baru (Sistem Undang Email)"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div>
@@ -290,7 +383,7 @@ function EmployeesPanel({
             </div>
             <div>
               <Label>Email Login</Label>
-              <Input className="bg-slate-950 border-slate-800" value={form.email}
+              <Input className="bg-slate-950 border-slate-800" value={form.email} disabled={!!editingId}
                 onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
             <div>
@@ -322,17 +415,13 @@ function EmployeesPanel({
                   <option key={v.id} value={v.id}>{v.name} (radius {v.radius_m}m)</option>
                 ))}
               </select>
-              {vendors.length === 0 && (
-                <p className="text-[11px] text-amber-400 mt-1">
-                  Belum ada vendor terdaftar. Tambahkan di menu "Vendor Locations" terlebih dahulu.
-                </p>
-              )}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-500 text-white" onClick={handleSave}>
-              {editingId ? "Simpan Perubahan" : "Simpan Akun"}
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>Batal</Button>
+            <Button className="bg-indigo-600 hover:bg-indigo-500 text-white" onClick={handleSave} disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {editingId ? "Simpan Perubahan" : "Kirim Undangan Akun"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -348,6 +437,7 @@ function VendorsPanel({ vendors, onChanged }: { vendors: Vendor[]; onChanged: ()
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyVendorForm);
   const [locating, setLocating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const openCreate = () => {
     setEditingId(null);
@@ -384,37 +474,58 @@ function VendorsPanel({ vendors, onChanged }: { vendors: Vendor[]; onChanged: ()
     );
   };
 
-  const handleSave = () => {
-    const lat = parseFloat(form.latitude);
-    const lng = parseFloat(form.longitude);
-    const radius = parseInt(form.radius_m, 10);
-    if (!form.name.trim() || Number.isNaN(lat) || Number.isNaN(lng) || Number.isNaN(radius)) {
+  const handleSave = async () => {
+    const payload = {
+      name: form.name.trim(),
+      address: form.address.trim(),
+      latitude: parseFloat(form.latitude),
+      longitude: parseFloat(form.longitude),
+      radius_m: parseInt(form.radius_m, 10),
+    };
+
+    if (!payload.name || Number.isNaN(payload.latitude) || Number.isNaN(payload.longitude) || Number.isNaN(payload.radius_m)) {
       toast.error("Nama, latitude, longitude, dan radius wajib diisi dengan benar.");
       return;
     }
-    const payload = { name: form.name.trim(), address: form.address.trim(), latitude: lat, longitude: lng, radius_m: radius };
-    if (editingId) {
-      updateVendor(editingId, payload);
-      toast.success("Vendor location diperbarui.");
-    } else {
-      createVendor(payload);
-      toast.success("Vendor location baru ditambahkan.");
+
+    setIsSubmitting(true);
+    try {
+      if (editingId) {
+        const { error } = await supabase.from('vendors').update(payload).eq('id', editingId);
+        if (error) throw error;
+        toast.success("Vendor location diperbarui.");
+      } else {
+        const { error } = await supabase.from('vendors').insert([payload]);
+        if (error) throw error;
+        toast.success("Vendor location baru ditambahkan.");
+      }
+
+      onChanged();
+      setOpen(false);
+      setForm(emptyVendorForm);
+      setEditingId(null);
+    } catch (err: any) {
+      toast.error(err?.message || "Gagal menyimpan vendor ke Supabase.");
+    } finally {
+      setIsSubmitting(false);
     }
-    onChanged();
-    setOpen(false);
-    setForm(emptyVendorForm);
-    setEditingId(null);
   };
 
-  const handleDelete = (v: Vendor) => {
+  const handleDelete = async (v: Vendor) => {
     const boundCount = countEmployeesForVendor(v.id);
     const warning = boundCount > 0
       ? `${boundCount} karyawan saat ini terikat ke "${v.name}" dan akan menjadi "belum ditentukan". Lanjutkan hapus?`
       : `Hapus vendor location "${v.name}"?`;
     if (!window.confirm(warning)) return;
-    deleteVendor(v.id);
-    toast.success("Vendor location dihapus.");
-    onChanged();
+
+    try {
+      const { error } = await supabase.from('vendors').delete().eq('id', v.id);
+      if (error) throw error;
+      toast.success("Vendor location deleted.");
+      onChanged();
+    } catch (err: any) {
+      toast.error(err?.message || "Gagal menghapus vendor dari Supabase.");
+    }
   };
 
   return (
@@ -422,7 +533,7 @@ function VendorsPanel({ vendors, onChanged }: { vendors: Vendor[]; onChanged: ()
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="text-base">Vendor Locations</CardTitle>
-          <p className="text-xs text-slate-500 mt-1">{vendors.length} lokasi terdaftar — dipakai sebagai titik radius presensi karyawan</p>
+          <p className="text-xs text-slate-500 mt-1">{vendors.length} lokasi terdaftar</p>
         </div>
         <Button className="bg-indigo-600 hover:bg-indigo-500" onClick={openCreate}>
           <MapPinned className="w-4 h-4 mr-1.5" /> Tambah Vendor
@@ -434,13 +545,12 @@ function VendorsPanel({ vendors, onChanged }: { vendors: Vendor[]; onChanged: ()
           <Alert className="m-4">
             <AlertTriangle className="w-4 h-4" />
             <AlertTitle>Belum ada vendor</AlertTitle>
-            <AlertDescription>Tambahkan minimal satu vendor location agar karyawan bisa diikat ke lokasi tersebut.</AlertDescription>
+            <AlertDescription>Tambahkan lokasi vendor terlebih dahulu.</AlertDescription>
           </Alert>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
                 <TableHead>Nama Vendor</TableHead>
                 <TableHead>Alamat</TableHead>
                 <TableHead>Koordinat</TableHead>
@@ -452,7 +562,6 @@ function VendorsPanel({ vendors, onChanged }: { vendors: Vendor[]; onChanged: ()
             <TableBody>
               {vendors.map((v) => (
                 <TableRow key={v.id}>
-                  <TableCell className="font-mono text-xs">{v.id}</TableCell>
                   <TableCell className="font-medium">{v.name}</TableCell>
                   <TableCell className="text-xs text-slate-500 max-w-[220px] truncate">{v.address || "—"}</TableCell>
                   <TableCell className="font-mono text-xs">{v.latitude.toFixed(5)}, {v.longitude.toFixed(5)}</TableCell>
@@ -512,8 +621,9 @@ function VendorsPanel({ vendors, onChanged }: { vendors: Vendor[]; onChanged: ()
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-500 text-white" onClick={handleSave}>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>Batal</Button>
+            <Button className="bg-indigo-600 hover:bg-indigo-500 text-white" onClick={handleSave} disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2 inline" /> : null}
               {editingId ? "Simpan Perubahan" : "Simpan Vendor"}
             </Button>
           </DialogFooter>
@@ -525,34 +635,54 @@ function VendorsPanel({ vendors, onChanged }: { vendors: Vendor[]; onChanged: ()
 
 /* ============================== REPORTS ============================== */
 
-function Reports({ summaries, allLogs }: { summaries: EmployeeSummary[]; allLogs: AttendanceLog[] }) {
+function Reports({ summaries, allLogs }: { summaries: EmployeeSummary[]; allLogs: AttendanceLogView[] }) {
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
   const nameOf = (id: string) => summaries.find((s) => s.profile.id === id)?.profile.full_name ?? id;
 
-  const anomalies = allLogs.filter((l) => l.status === "anomaly");
+  const anomalies = allLogs.filter((l) => l.status === "flagged_mock_gps" || l.status === "outside_geofence");
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "success": return "Valid";
+      case "flagged_mock_gps": return "Fake GPS!";
+      case "outside_geofence": return "Luar Radius";
+      default: return "Anomali";
+    }
+  };
 
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader><CardTitle className="text-base">Log Kecurangan Presensi</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base text-red-500">Log Kecurangan & Anomali Presensi</CardTitle></CardHeader>
         <CardContent className="p-0">
           {anomalies.length === 0 ? (
             <Alert className="m-4">
-              <CheckCircle2 className="w-4 h-4" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
               <AlertTitle>Aman</AlertTitle>
-              <AlertDescription>Semua presensi terverifikasi valid.</AlertDescription>
+              <AlertDescription>Belum ada indikasi kecurangan Geofence maupun Fake GPS terdeteksi.</AlertDescription>
             </Alert>
           ) : (
             <Table>
               <TableHeader>
-                <TableRow><TableHead>Foto</TableHead><TableHead>Karyawan</TableHead><TableHead>Jarak</TableHead><TableHead>Waktu</TableHead></TableRow>
+                <TableRow>
+                  <TableHead>Foto</TableHead>
+                  <TableHead>Karyawan</TableHead>
+                  <TableHead>Jenis Pelanggaran</TableHead>
+                  <TableHead>Jarak Saat Absen</TableHead>
+                  <TableHead>Waktu</TableHead>
+                </TableRow>
               </TableHeader>
               <TableBody>
                 {anomalies.map((log) => (
-                  <TableRow key={log.id}>
+                  <TableRow key={log.id} className="bg-red-50/30">
                     <TableCell><PhotoThumb photo={log.photo} onClick={() => log.photo && setPreviewPhoto(log.photo)} /></TableCell>
-                    <TableCell>{nameOf(log.employee_id)}</TableCell>
-                    <TableCell>{Math.round(log.distance_m)} m</TableCell>
+                    <TableCell className="font-medium">{nameOf(log.employee_id)}</TableCell>
+                    <TableCell>
+                      <span className="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-full">
+                        {getStatusLabel(log.status)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-mono text-red-600">{Math.round(log.distance_m)} m</TableCell>
                     <TableCell>{new Date(log.created_at).toLocaleString()}</TableCell>
                   </TableRow>
                 ))}
@@ -563,20 +693,20 @@ function Reports({ summaries, allLogs }: { summaries: EmployeeSummary[]; allLogs
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Seluruh Log Absensi</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">Seluruh Log Absensi Real-Time</CardTitle></CardHeader>
         <CardContent className="p-0">
           {allLogs.length === 0 ? (
             <Alert className="m-4">
               <AlertTriangle className="w-4 h-4" />
               <AlertTitle>Belum ada aktivitas</AlertTitle>
-              <AlertDescription>Log presensi karyawan akan muncul di sini.</AlertDescription>
+              <AlertDescription>Log presensi karyawan cloud akan muncul di sini.</AlertDescription>
             </Alert>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Foto</TableHead><TableHead>Karyawan</TableHead><TableHead>Tipe</TableHead>
-                  <TableHead>Status</TableHead><TableHead>Jarak</TableHead><TableHead>Waktu</TableHead>
+                  <TableHead>Status Validasi</TableHead><TableHead>Jarak</TableHead><TableHead>Waktu</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -584,13 +714,15 @@ function Reports({ summaries, allLogs }: { summaries: EmployeeSummary[]; allLogs
                   <TableRow key={log.id}>
                     <TableCell><PhotoThumb photo={log.photo} onClick={() => log.photo && setPreviewPhoto(log.photo)} /></TableCell>
                     <TableCell>{nameOf(log.employee_id)}</TableCell>
-                    <TableCell>{log.type}</TableCell>
+                    <TableCell className="uppercase text-xs font-semibold text-slate-600">{log.type}</TableCell>
                     <TableCell>
-                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${log.status === "success" ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
-                        {log.status === "success" ? "Valid" : "Anomali"}
+                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                        log.status === "success" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                      }`}>
+                        {getStatusLabel(log.status)}
                       </span>
                     </TableCell>
-                    <TableCell>{Math.round(log.distance_m)} m</TableCell>
+                    <TableCell className="font-mono">{Math.round(log.distance_m)} m</TableCell>
                     <TableCell>{new Date(log.created_at).toLocaleString()}</TableCell>
                   </TableRow>
                 ))}
@@ -602,8 +734,8 @@ function Reports({ summaries, allLogs }: { summaries: EmployeeSummary[]; allLogs
 
       <Dialog open={!!previewPhoto} onOpenChange={(o) => !o && setPreviewPhoto(null)}>
         <DialogContent className="bg-slate-900 border-slate-800 max-w-md">
-          <DialogHeader><DialogTitle>Foto Bukti Presensi</DialogTitle></DialogHeader>
-          {previewPhoto && <img src={previewPhoto} alt="Bukti presensi" className="w-full rounded-lg" />}
+          <DialogHeader><DialogTitle className="text-white">Foto Bukti Presensi (On-Site Selfie)</DialogTitle></DialogHeader>
+          {previewPhoto && <img src={previewPhoto} alt="Bukti presensi" className="w-full rounded-lg object-cover" />}
         </DialogContent>
       </Dialog>
     </div>
@@ -632,13 +764,13 @@ function Monitoring({ summaries, vendors }: { summaries: EmployeeSummary[]; vend
 
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">Monitoring Real-Time</CardTitle></CardHeader>
+      <CardHeader><CardTitle className="text-base">Monitoring Kedatangan Real-Time</CardTitle></CardHeader>
       <CardContent className="space-y-4">
         {summaries.length === 0 && (
           <Alert>
             <AlertTriangle className="w-4 h-4" />
             <AlertTitle>Belum ada karyawan</AlertTitle>
-            <AlertDescription>Tambahkan karyawan di menu Manajemen Karyawan.</AlertDescription>
+            <AlertDescription>Tambahkan data karyawan terlebih dahulu.</AlertDescription>
           </Alert>
         )}
         {summaries.map((s) => (
@@ -658,8 +790,13 @@ function Monitoring({ summaries, vendors }: { summaries: EmployeeSummary[]; vend
             </div>
             <div className="text-right">
               <p className="text-sm font-bold">{s.latestAttendance ? `${Math.round(s.latestAttendance.distance_m)} m` : "—"}</p>
-              <p className={`text-xs ${s.latestAttendance?.status === "anomaly" ? "text-red-500" : "text-slate-400"}`}>
-                {s.latestAttendance ? (s.latestAttendance.status === "anomaly" ? "Anomali Terdeteksi" : "Sudah Absen") : "Belum Absen"}
+              <p className={`text-xs font-semibold ${
+                s.latestAttendance?.status === "success" ? "text-emerald-600" : s.latestAttendance ? "text-red-500" : "text-slate-400"
+              }`}>
+                {s.latestAttendance 
+                  ? (s.latestAttendance.status === "success" ? "Valid On-Site" : `Pelanggaran: ${getStatusLabel(s.latestAttendance.status)}`) 
+                  : "Belum Melakukan Absen"
+                }
               </p>
             </div>
           </div>
@@ -667,4 +804,13 @@ function Monitoring({ summaries, vendors }: { summaries: EmployeeSummary[]; vend
       </CardContent>
     </Card>
   );
+
+  function getStatusLabel(status: string) {
+    switch (status) {
+      case "success": return "Valid";
+      case "flagged_mock_gps": return "Fake GPS!";
+      case "outside_geofence": return "Luar Radius";
+      default: return "Anomali";
+    }
+  }
 }
